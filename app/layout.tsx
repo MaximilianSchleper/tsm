@@ -8,8 +8,8 @@ import * as fonts from "~/lib/fonts";
 import { cn } from "~/lib/utils";
 
 export const metadata = {
-  title: "Next.js + TypeScript Starter",
-  description: "A starter template for Next.js and TypeScript",
+  title: "Travelling Space Man",
+  description: "A platform for managing satellite constellations and optimizing task scheduling.",
 };
 
 const RootLayout: React.FCC = ({ children }) => {

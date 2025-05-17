@@ -19,28 +19,6 @@ import {
 import { useEventListener } from "~/hooks/use-event-listner";
 
 const Home: React.FC = () => {
-  const [isCopied, setIsCopied] = React.useState(false);
-  const [showDropdown, setShowDropdown] = React.useState(false);
-
-  // close dropdown on ESC key press
-  useEventListener("keydown", (e) => {
-    if (e.key === "Escape") setShowDropdown(false);
-  });
-
-  const copyToClipboard = (pm: PackageManagers) => {
-    setShowDropdown(false);
-    setIsCopied(true);
-
-    const text = `${packageManagers[pm]} degit rajput-hemant/nextjs-template <project-name>`;
-
-    try {
-      void navigator.clipboard.writeText(text);
-      setIsCopied(true);
-    } catch (err) {
-      console.error("Failed to copy: ", err);
-    }
-  };
-
   return (
     <main className="layout min-h-screen w-full bg-black bg-fixed text-white selection:bg-zinc-300 selection:text-black">
       <section className="container px-4 py-12 md:px-6 md:pt-24 lg:pt-32 xl:pt-48">
