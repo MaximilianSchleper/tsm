@@ -5,110 +5,95 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="public/nextjs-light.svg">
   <source media="(prefers-color-scheme: light)" srcset="public/nextjs-dark.svg">
-  <img alt="Next.js">
+  <img alt="Satellite Constellation Manager">
 </picture>
 
-# Next.js Starter Template
+# Satellite Constellation Manager
 
-### A Minimal Next.js Starter Template with TypeScript, Tailwind CSS, and pre-configured with ESLint, Prettier, and Husky.
+### A Next.js-based tool for managing satellite constellations, visualizing orbits, and optimizing imaging task scheduling with a sci-fi inspired interface.
 
 </div>
 
 ## Features
 
-- ⚡ **[Next.js](https://nextjs.org/)** - A React Framework for Production
-- 🔥 **[App Router](https://nextjs.org/docs/app)** - It is a new paradigm for building applications using React's latest features.
-- 🎨 **[Tailwind CSS](https://tailwindcss.com/)** - A Utility-First CSS Framework for Rapid UI Development
-- 📦 **[TypeScript](https://www.typescriptlang.org/)** - A typed superset of JavaScript that compiles to plain JavaScript
-- 📝 **[ESLint](https://eslint.org/)** - The pluggable linting utility for JavaScript and JSX
-- 🛠 **[Prettier](https://prettier.io/)** - An opinionated code formatter
-- 🐶 **[Husky](https://typicode.github.io/husky/#/)** - A tool that makes Git hooks easy
-- 🚫 **[lint-staged](https://github.com/okonet/lint-staged)** - Run linters against staged git files
-- 📄 **[commitlint](https://commitlint.js.org/#/)** - Lint commit messages
-- 📦 **[bun](https://bun.sh)** - A JavaScript runtime w/ Fast, disk space efficient package manager
+- 🛰️ **Satellite Management** - Input and manage up to 10 satellites using Two-Line Elements (TLEs)
+- 📋 **Task Scheduling** - Define up to 50 imaging tasks with locations and time windows
+- 🎯 **Optimization** - Generate efficient schedules for satellite imaging tasks
+- 🌍 **3D Visualization** - Interactive 3D globe with satellite orbits and task locations
+- ⚡ **Real-time Animation** - Timeline-based visualization of satellite movements and task activations
+- 🎨 **Sci-fi Interface** - Dark theme with neon accents inspired by The Expanse
+- 📊 **Interactive Features** - Track satellites, view details, and explore the constellation
+
+## Tech Stack
+
+- ⚡ **[Next.js](https://nextjs.org/)** - React Framework for Production
+- 🔥 **[App Router](https://nextjs.org/docs/app)** - Latest Next.js features
+- 🎨 **[Tailwind CSS](https://tailwindcss.com/)** - Utility-First CSS Framework
+- 📦 **[TypeScript](https://www.typescriptlang.org/)** - Type Safety
+- 🌍 **[Resium/CesiumJS](https://resium.darwineducation.com/)** - 3D Globe Visualization
+- 🛰️ **[Satellite.js](https://github.com/shashwatak/satellite-js)** - Orbital Calculations
+- 📝 **[ESLint](https://eslint.org/)** - Code Quality
+- 🛠 **[Prettier](https://prettier.io/)** - Code Formatting
+- 🐶 **[Husky](https://typicode.github.io/husky/#/)** - Git Hooks
+- 🚫 **[lint-staged](https://github.com/okonet/lint-staged)** - Staged File Linting
+- 📄 **[commitlint](https://commitlint.js.org/#/)** - Commit Message Linting
 
 ## Getting Started
 
 ```bash
-bun create next-app -e "https://github.com/rajput-hemant/nextjs-template" <project-name>
+# Clone the repository
+git clone https://github.com/yourusername/satellite-constellation-manager.git
 
-npx create-next-app -e "https://github.com/rajput-hemant/nextjs-template" <project-name>
-```
+cd satellite-constellation-manager
 
-<p align="center" style="font-weight: bold;">OR</p>
-
-**Install `degit` globally**
-
-```bash
-bun i -g degit || pnpm i -g degit || yarn global add degit || npm i -g degit
-```
-
-**Create a new project from this template**
-
-```bash
-degit rajput-hemant/nextjs-template <project-name>
-# src directory
-degit rajput-hemant/nextjs-template#src-dir <project-name>
-# tRPC
-degit rajput-hemant/nextjs-template#trpc <project-name>
-
-cd <project-name>
-```
-
-**Install dependencies**
-
-```bash
+# Install dependencies
 bun i || pnpm i || yarn || npm i
+
+# Start development server
+bun dev || pnpm dev || yarn dev || npm run dev
 ```
 
-**Initialize a new git repository _(Optional)_:**
+## Core Functionality
 
-```bash
-git init
-git add .
-git commit --no-verify -m "init"
-```
+1. **Satellite Management**
+   - Add satellites using TLE data
+   - View satellite list with orbit details
+   - Edit or remove satellites
 
-## Integrations
+2. **Task Scheduling**
+   - Define imaging tasks with coordinates
+   - Set time windows and priorities
+   - Generate optimized schedules
 
-[Kirimase](https://kirimase.dev) is a Next.js CLI tool that accelerates full-stack app development. It seamlessly integrates packages like ORM (Prisma or Drizzle), authentication (Auth.js, Clerk, Lucia, Kinde), UI components (Shadcn-UI), payments (Stripe), and email (Resend), following best practices.
+3. **3D Visualization**
+   - Interactive globe with country outlines
+   - Glowing satellite orbits
+   - Task location markers
+   - Timeline-based animation
 
-To add integrations to your project, run:
-
-```bash
-kirimase init
-```
+4. **Demo Mode**
+   - Preloaded sample constellation
+   - Example imaging tasks
+   - One-click visualization
 
 ## Available Scripts
 
-In the project directory, you can run:
-
 | **Script**   | **Description**                                      |
 | ------------ | ---------------------------------------------------- |
-| `dev`        | Runs the app in the development mode.                |
-| `build`      | Builds the app for production to the `.next` folder. |
-| `start`      | Runs the built app in the production mode.           |
-| `preview`    | Builds and serves the app in the production mode.    |
-| `lint`       | Runs next lint on the project.                       |
-| `type-check` | Runs TypeScript type checker.                        |
-| `fmt`        | Formats the code with Prettier.                      |
-| `fmt:check`  | Checks if the code is formatted with Prettier.       |
-| `prepare`    | Installs husky git hooks.                            |
+| `dev`        | Runs the app in development mode                     |
+| `build`      | Builds the app for production                        |
+| `start`      | Runs the built app in production mode                |
+| `preview`    | Builds and serves the app in production mode         |
+| `lint`       | Runs ESLint on the project                           |
+| `type-check` | Runs TypeScript type checker                         |
+| `fmt`        | Formats code with Prettier                           |
+| `fmt:check`  | Checks code formatting with Prettier                 |
 
 ## After Installation Checklist
 
-- [ ] Update `package.json` with your project details.
-- [ ] Update `README.md` with your project details.
-- [ ] Update `LICENSE` with your name and year.
-
-## Switching Package Manager
-
-This template uses [bun](https://bun.sh/docs/cli/install) as the default package manager. If you want to use `pnpm`, `npm` or `yarn`, you need to remove the `bun.lockb` file and run `pnpm i`, `npm i` or `yarn` to generate the lock file for the respective package manager.
-
-## Deployments
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/git/external?repository-url=https://github.com/rajput-hemant/nextjs-template)
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/rajput-hemant/nextjs-template)
+- [ ] Update `package.json` with your project details
+- [ ] Update `README.md` with your project details
+- [ ] Update `LICENSE` with your name and year
 
 ## License
 
@@ -126,14 +111,14 @@ _Note: It may take up to 24h for the [contrib.rocks][contrib-rocks] plugin to up
 
 <!----------------------------------{ Labels }--------------------------------->
 
-[views]: https://komarev.com/ghpvc/?username=nextjs-template&label=view%20counter&color=red&style=flat
-[repo-size]: https://img.shields.io/github/repo-size/rajput-hemant/nextjs-template
-[issues]: https://img.shields.io/github/issues-raw/rajput-hemant/nextjs-template
-[license]: https://img.shields.io/github/license/rajput-hemant/nextjs-template
-[forks]: https://img.shields.io/github/forks/rajput-hemant/nextjs-template?style=flat
-[stars]: https://img.shields.io/github/stars/rajput-hemant/nextjs-template
-[contributors]: https://contrib.rocks/image?repo=rajput-hemant/nextjs-template&max=500
-[contributors-graph]: https://github.com/rajput-hemant/nextjs-template/graphs/contributors
-[contrib-rocks]: https://contrib.rocks/preview?repo=rajput-hemant%2Fnextjs-template
+[views]: https://komarev.com/ghpvc/?username=satellite-constellation-manager&label=view%20counter&color=red&style=flat
+[repo-size]: https://img.shields.io/github/repo-size/yourusername/satellite-constellation-manager
+[issues]: https://img.shields.io/github/issues-raw/yourusername/satellite-constellation-manager
+[license]: https://img.shields.io/github/license/yourusername/satellite-constellation-manager
+[forks]: https://img.shields.io/github/forks/yourusername/satellite-constellation-manager?style=flat
+[stars]: https://img.shields.io/github/stars/yourusername/satellite-constellation-manager
+[contributors]: https://contrib.rocks/image?repo=yourusername/satellite-constellation-manager&max=500
+[contributors-graph]: https://github.com/yourusername/satellite-constellation-manager/graphs/contributors
+[contrib-rocks]: https://contrib.rocks/preview?repo=yourusername%2Fsatellite-constellation-manager
 [ntl-badge]: https://api.netlify.com/api/v1/badges/6955f80c-0747-4947-a344-e7c647012cbe/deploy-status
-[ntl-link]: https://app.netlify.com/sites/react-template-vite/deploys
+[ntl-link]: https://app.netlify.com/sites/satellite-constellation-manager/deploys
