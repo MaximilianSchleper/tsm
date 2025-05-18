@@ -1,6 +1,6 @@
 "use client";
 
-import { Viewer, ImageryLayer, CesiumComponentRef } from "resium";
+import { Viewer, ImageryLayer, CesiumComponentRef, GeoJsonDataSource } from "resium";
 import * as Cesium from "cesium";
 import React, { useMemo, useRef, useEffect } from 'react';
 
@@ -25,6 +25,13 @@ const GlobeViewer = () => {
     tileWidth: 4096,
     tileHeight: 2048,
   }), []);
+
+  const gridImageryProvider = new Cesium.GridImageryProvider({
+    tilingScheme: new Cesium.GeographicTilingScheme(),
+    cells: 8,
+    glowWidth: 0,
+    color: Cesium.Color.GREY.withAlpha(0.5),
+  });
 
   // Create a dummy div for the credit container to hide default credits
   const dummyCreditContainer = typeof document !== 'undefined' ? document.createElement('div') : undefined;
@@ -58,6 +65,12 @@ const GlobeViewer = () => {
       selectionIndicator={false}
     >
       <ImageryLayer imageryProvider={imageryProvider} />
+      <ImageryLayer imageryProvider={gridImageryProvider} />
+      <GeoJsonDataSource
+        data="/ne_110m_admin_0_countries.geojson"
+        stroke={Cesium.Color.CYAN.withAlpha(0.5)}
+        strokeWidth={2}
+      />
     </Viewer>
   );
 };
