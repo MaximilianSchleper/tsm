@@ -1,22 +1,13 @@
 "use client";
 
-import "./layout.css";
 import dynamic from 'next/dynamic';
-import * as React from "react";
 
-const GlobeViewer = dynamic(() => import('../components/GlobeViewer'), { 
-  ssr: false,
-  loading: () => <p>Loading Globe...</p>
-});
+const GlobeViewer = dynamic(() => import('../components/GlobeViewer'), { ssr: false });
 
-const Home: React.FC = () => {
+export default function Home() {
   return (
     <main>
-      <section>
-        <GlobeViewer />
-      </section>
+      <GlobeViewer />
     </main>
   );
-};
-
-export default Home;
+}

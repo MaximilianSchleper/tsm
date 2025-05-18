@@ -1,31 +1,12 @@
 import "./globals.css";
+import React from 'react';
 
-import React from "react";
-
-import { Providers } from "~/components/providers";
-import { TailwindIndicator } from "~/components/tailwind-indicator";
-import * as fonts from "~/lib/fonts";
-import { cn } from "~/lib/utils";
-
-export const metadata = {
-  title: "Travelling Space Man",
-  description: "A platform for managing satellite constellations and optimizing task scheduling.",
-};
-
-const RootLayout: React.FCC = ({ children }) => {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html
-      lang="en"
-      suppressHydrationWarning
-      className={cn(Object.values(fonts).map((font) => font.variable))}
-    >
-      <body className="min-h-dvh scroll-smooth font-sans antialiased">
-        <Providers>{children}</Providers>
-
-        <TailwindIndicator />
+    <html lang="en">
+      <body>
+        {children}
       </body>
     </html>
   );
-};
-
-export default RootLayout;
+}
