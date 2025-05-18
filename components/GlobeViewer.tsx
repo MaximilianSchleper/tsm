@@ -1,16 +1,23 @@
 "use client";
 
-import { Viewer, ImageryLayer } from "resium";
+import { Viewer, ImageryLayer, CesiumComponentRef } from "resium";
 import * as Cesium from "cesium";
 import React, { useMemo, useRef, useEffect } from 'react';
 
+// Define the window type with CESIUM_BASE_URL
+declare global {
+  interface Window {
+    CESIUM_BASE_URL: string;
+  }
+}
+
 // Ensure CESIUM_BASE_URL is set on the window object for Cesium to find its assets
 if (typeof window !== 'undefined') {
-  (window as any).CESIUM_BASE_URL = "/cesium/";
+  window.CESIUM_BASE_URL = "/cesium/";
 }
 
 const GlobeViewer = () => {
-  const viewerRef = useRef<any>(null);
+  const viewerRef = useRef<CesiumComponentRef<Cesium.Viewer>>(null);
 
   const imageryProvider = useMemo(() => new Cesium.SingleTileImageryProvider({
     url: "/EarthMap.jpg",
@@ -19,27 +26,17 @@ const GlobeViewer = () => {
     tileHeight: 2048,
   }), []);
 
-  // const defaultSkyBox = useMemo(() => new Cesium.SkyBox({
-  //   sources: {
-  //     positiveX: '/cesium/Assets/Textures/SkyBox/px.png',
-  //     negativeX: '/cesium/Assets/Textures/SkyBox/nx.png',
-  //     positiveY: '/cesium/Assets/Textures/SkyBox/py.png',
-  //     negativeY: '/cesium/Assets/Textures/SkyBox/ny.png',
-  //     positiveZ: '/cesium/Assets/Textures/SkyBox/pz.png',
-  //     negativeZ: '/cesium/Assets/Textures/SkyBox/nz.png'
-  //   }
-  // }), []);
-
   // Create a dummy div for the credit container to hide default credits
   const dummyCreditContainer = typeof document !== 'undefined' ? document.createElement('div') : undefined;
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      if (viewerRef.current && viewerRef.current.cesiumElement) {
-        const canvas = viewerRef.current.cesiumElement.canvas;
+      const cesiumViewerInstance = viewerRef.current?.cesiumElement;
+      if (cesiumViewerInstance) {
+        const canvas = cesiumViewerInstance.canvas;
         canvas.style.width = '100%';
         canvas.style.height = '100%';
-        viewerRef.current.cesiumElement.cesiumWidget.resize();
+        cesiumViewerInstance.resize();
       }
     }, 0);
     return () => clearTimeout(timeoutId);
