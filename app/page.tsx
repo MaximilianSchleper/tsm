@@ -11,8 +11,8 @@ const GlobeViewer = dynamic(() => import('../components/GlobeViewer'), {
 
 const Home: React.FC = () => {
   return (
-    <main className="layout min-h-screen w-full bg-black bg-fixed text-white selection:bg-zinc-300 selection:text-black">
-      <section className="h-screen w-screen">
+    <main>
+      <section>
         <GlobeViewer />
       </section>
     </main>

@@ -12,16 +12,17 @@ const GlobeViewer = () => {
   const imageryProvider = new Cesium.SingleTileImageryProvider({
     url: "/EarthMap.jpg", // Using EarthMap.jpg from public folder
     rectangle: Cesium.Rectangle.fromDegrees(-180, -90, 180, 90),
-    tileWidth: 2000,
-    tileHeight: 1000,
+    tileWidth: 4096,
+    tileHeight: 2048,
   });
 
   // Create a dummy div for the credit container to hide default credits
   const dummyCreditContainer = typeof document !== 'undefined' ? document.createElement('div') : undefined;
 
   return (
-    <div className="h-full w-full bg-gray-900">
+    <div className="h-full w-full bg-white">
       <Viewer
+        full
         baseLayerPicker={false}
         geocoder={false}
         homeButton={false}
@@ -33,6 +34,7 @@ const GlobeViewer = () => {
         skyBox={false}
         infoBox={false}
         creditContainer={dummyCreditContainer}
+        selectionIndicator={false}
       >
         <ImageryLayer imageryProvider={imageryProvider} />
       </Viewer>
