@@ -1,13 +1,5 @@
 <div align=center>
 
-[![ntl-badge]][ntl-link] ![views] ![stars] ![forks] ![issues] ![license] ![repo-size]
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="public/nextjs-light.svg">
-  <source media="(prefers-color-scheme: light)" srcset="public/nextjs-dark.svg">
-  <img alt="Satellite Constellation Manager">
-</picture>
-
 # Satellite Constellation Manager
 
 ### A Next.js-based tool for managing satellite constellations, visualizing orbits, and optimizing imaging task scheduling with a sci-fi inspired interface.
@@ -94,31 +86,3 @@ bun dev || pnpm dev || yarn dev || npm run dev
 - [ ] Update `package.json` with your project details
 - [ ] Update `README.md` with your project details
 - [ ] Update `LICENSE` with your name and year
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Contributors:
-
-<div align=center>
-
-[![][contributors]][contributors-graph]
-
-_Note: It may take up to 24h for the [contrib.rocks][contrib-rocks] plugin to update because it's refreshed once a day._
-
-</div>
-
-<!----------------------------------{ Labels }--------------------------------->
-
-[views]: https://komarev.com/ghpvc/?username=satellite-constellation-manager&label=view%20counter&color=red&style=flat
-[repo-size]: https://img.shields.io/github/repo-size/yourusername/satellite-constellation-manager
-[issues]: https://img.shields.io/github/issues-raw/yourusername/satellite-constellation-manager
-[license]: https://img.shields.io/github/license/yourusername/satellite-constellation-manager
-[forks]: https://img.shields.io/github/forks/yourusername/satellite-constellation-manager?style=flat
-[stars]: https://img.shields.io/github/stars/yourusername/satellite-constellation-manager
-[contributors]: https://contrib.rocks/image?repo=yourusername/satellite-constellation-manager&max=500
-[contributors-graph]: https://github.com/yourusername/satellite-constellation-manager/graphs/contributors
-[contrib-rocks]: https://contrib.rocks/preview?repo=yourusername%2Fsatellite-constellation-manager
-[ntl-badge]: https://api.netlify.com/api/v1/badges/6955f80c-0747-4947-a344-e7c647012cbe/deploy-status
-[ntl-link]: https://app.netlify.com/sites/satellite-constellation-manager/deploys
