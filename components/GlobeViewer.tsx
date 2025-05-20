@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Viewer, ImageryLayer, CesiumComponentRef, GeoJsonDataSource, Clock, Globe } from "resium";
@@ -17,7 +18,9 @@ if (typeof window !== 'undefined') {
 }
 
 const GlobeViewer = () => {
-  const viewerRef = useRef<CesiumComponentRef<Cesium.Viewer>>(null);
+    // Create a dummy div for the credit container to hide default credits
+  const dummyCreditContainer = useMemo(() => 
+     typeof document !== 'undefined' ? document.createElement('div') : undefined, []);
 
   const imageryProvider = useMemo(() => new Cesium.SingleTileImageryProvider({
     url: "/EarthMap.jpg",
@@ -26,64 +29,27 @@ const GlobeViewer = () => {
     tileHeight: 2048,
   }), []);
 
-  const gridImageryProvider = new Cesium.GridImageryProvider({
+  const gridImageryProvider = useMemo(() => new Cesium.GridImageryProvider({
     tilingScheme: new Cesium.GeographicTilingScheme(),
     cells: 8,
     glowWidth: 0,
     color: Cesium.Color.GREY.withAlpha(0.5),
-  });
+  }), []);
 
-  // Create a dummy div for the credit container to hide default credits
-  const dummyCreditContainer = typeof document !== 'undefined' ? document.createElement('div') : undefined;
-
-  // Get current date for clock
-  const now = useMemo(() => Cesium.JulianDate.fromDate(new Date()), []);
-  const stop = useMemo(() => {
-    const future = Cesium.JulianDate.addDays(now, 2, new Cesium.JulianDate());
-    return future;
-  }, [now]);
+  let viewer = <
+    Viewer full
+    creditContainer={dummyCreditContainer}
+    baseLayerPicker={false}
+    homeButton={false}
+    sceneModePicker={false}
+  >
+    <ImageryLayer imageryProvider={imageryProvider} />
+    <ImageryLayer imageryProvider={gridImageryProvider} />
+  </Viewer>;
 
   return (
-    <div className="relative w-full h-full">
-      <Viewer
-        ref={viewerRef}
-        baseLayerPicker={false}
-        geocoder={true}
-        homeButton={false}
-        sceneModePicker={false}
-        navigationHelpButton={false}
-        animation={true}
-        timeline={true}
-        fullscreenButton={false}
-        infoBox={false}
-        creditContainer={dummyCreditContainer}
-        selectionIndicator={false}
-      >
-        <Globe 
-          enableLighting={true}
-          showGroundAtmosphere={true}
-          dynamicAtmosphereLighting={true}
-          dynamicAtmosphereLightingFromSun={true}
-        />
-        <ImageryLayer imageryProvider={imageryProvider} />
-        <ImageryLayer imageryProvider={gridImageryProvider} />
-        <Clock
-          startTime={now}
-          currentTime={now}
-          stopTime={stop}
-          clockRange={Cesium.ClockRange.LOOP_STOP}
-          clockStep={Cesium.ClockStep.SYSTEM_CLOCK_MULTIPLIER}
-          multiplier={200}
-          shouldAnimate={true}
-        />
-        <GeoJsonDataSource
-          data="/ne_110m_admin_0_countries.geojson"
-          stroke={Cesium.Color.CYAN.withAlpha(0.5)}
-          strokeWidth={2}
-        />
-      </Viewer>
-    </div>
+    viewer
   );
-};
+}
 
 export default GlobeViewer;
