@@ -1,9 +1,9 @@
 
 "use client";
 
-import { Viewer, ImageryLayer, CesiumComponentRef, GeoJsonDataSource, Clock, Globe } from "resium";
+import { Viewer, ImageryLayer } from "resium";
 import * as Cesium from "cesium";
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo } from 'react';
 
 // Define the window type with CESIUM_BASE_URL
 declare global {
@@ -36,7 +36,7 @@ const GlobeViewer = () => {
     color: Cesium.Color.GREY.withAlpha(0.5),
   }), []);
 
-  let viewer = <
+  const viewer = <
     Viewer full
     creditContainer={dummyCreditContainer}
     baseLayerPicker={false}
