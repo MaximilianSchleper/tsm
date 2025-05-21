@@ -1,9 +1,9 @@
-
 "use client";
 
 import { Viewer, ImageryLayer } from "resium";
 import * as Cesium from "cesium";
 import React, { useMemo } from 'react';
+import type { ReactNode } from 'react';
 
 // Define the window type with CESIUM_BASE_URL
 declare global {
@@ -17,7 +17,11 @@ if (typeof window !== 'undefined') {
   window.CESIUM_BASE_URL = "/cesium/";
 }
 
-const GlobeViewer = () => {
+interface GlobeViewerProps {
+  children?: ReactNode;
+}
+
+const GlobeViewer: React.FC<GlobeViewerProps> = ({ children }) => {
     // Create a dummy div for the credit container to hide default credits
   const dummyCreditContainer = useMemo(() => 
      typeof document !== 'undefined' ? document.createElement('div') : undefined, []);
@@ -46,6 +50,7 @@ const GlobeViewer = () => {
   >
     <ImageryLayer imageryProvider={imageryProvider} />
     <ImageryLayer imageryProvider={gridImageryProvider} />
+    {children}
   </Viewer>;
 
   return (

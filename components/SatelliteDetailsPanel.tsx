@@ -10,7 +10,7 @@ const SatelliteDetailsPanel = () => {
     handleMouseDownResize, 
     isResizable 
   } = useDraggableResizable({
-    initialPosition: { top: 310, left: 1000 - 320 },
+    initialPosition: { top: 360, left: 1000 - 320 },
     initialSize: { width: 280, height: 180 },
     minWidth: 250,
     minHeight: 150,

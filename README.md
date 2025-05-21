@@ -13,6 +13,7 @@
 - 🎯 **Optimization** - Generate efficient schedules for satellite imaging tasks
 - 🌍 **3D Visualization** - Interactive 3D globe with satellite orbits and task locations
 - ⚡ **Real-time Animation** - Timeline-based visualization of satellite movements and task activations
+    - Test satellite (ISS TLE) orbit propagation and animation.
 - 🎨 **Sci-fi Interface** - Dark theme with neon accents inspired by The Expanse
 - 📊 **Interactive Features** - Track satellites, view details, and explore the constellation
 

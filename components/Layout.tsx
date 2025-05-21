@@ -11,14 +11,20 @@ const Layout = () => {
   return (
     <div className="layout-container">
       <div className="globe-viewer-background">
-        <GlobeViewer />
+        <GlobeViewer>
+          {/* UI panels are now children of GlobeViewer to access Cesium context */}
+          <TopBar />
+          <TaskSchedulePanel />
+          <ConstellationDetailsPanel />
+          <SatelliteDetailsPanel />
+        </GlobeViewer>
       </div>
       
       {/* All UI panels are now self-positioning draggable/resizable windows */}
-      <TopBar />
-      <TaskSchedulePanel />
-      <ConstellationDetailsPanel />
-      <SatelliteDetailsPanel />
+      {/* <TopBar /> */}
+      {/* <TaskSchedulePanel /> */}
+      {/* <ConstellationDetailsPanel /> */}
+      {/* <SatelliteDetailsPanel /> */}
     </div>
   );
 };

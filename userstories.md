@@ -38,8 +38,8 @@ These user stories outline the Minimum Viable Product (MVP) for a satellite cons
         - Tasks are distributed over the specified timespan (e.g., a target with "1 per day" frequency over 4 weeks would ideally get ~28 imaging opportunities, adjusted based on the 50 total task limit and other constraints).
 
 5.  **MVP Simulation Visualization & Control**
-    - As a user, I can view satellite orbits as polylines and their current positions as distinct points, animated on the Cesium globe, with positions calculated using satellite.js for circular LEO orbit propagation.
-    - As a user, I can see defined targets clearly marked and labeled on the Cesium globe.
+    - ✅ As a user, I can view satellite orbits as polylines and their current positions as distinct points, animated on the Cesium globe, with positions calculated using satellite.js for circular LEO orbit propagation. (Achieved for a single test satellite)
+    - ⏳ As a user, I can see defined targets clearly marked and labeled on the Cesium globe.
     - As a user, I can view scheduled imaging tasks in a list format (e.g., displaying "Satellite Alpha: Imaging Tokyo at 2025-05-22 14:30 UTC, Slew Angle: 5°") within its designated UI panel.
     - As a user, I can observe imaging events visually on the Cesium globe, such as a temporary line connecting the satellite to the target or a flash effect on the target when its imaging task is active within the simulation.
     - As a user, I can control the simulation's playback speed (e.g., play, pause, faster, slower) using Cesium's built-in clock and timeline controls for a dynamic, LeoLabs-like experience.
@@ -55,8 +55,8 @@ This plan outlines the core technical tasks to deliver the MVP, focusing on user
 - ✅ **Next.js (with TypeScript)**: Framework for UI and application logic.
 - ✅ **Resium/CesiumJS**: For 3D globe rendering and geospatial calculations.
 - ✅ **UI Styling with CSS**: Custom CSS for sci-fi theme and layout.
-- ⏳ **satellite.js**: For client-side LEO circular orbit propagation.
-- ⏳ **Nominatim (OpenStreetMap)**: For geocoding city names.
+- ✅ **satellite.js**: For client-side LEO circular orbit propagation.
+- ✅ **Nominatim (OpenStreetMap)**: For geocoding city names.
 
 ### Technical Implementation Tasks (MVP Focus)
 
@@ -79,8 +79,8 @@ This plan outlines the core technical tasks to deliver the MVP, focusing on user
     - ⏳ Store target data in React state.
 
 4.  **Orbit Propagation & Core Logic (satellite.js):**
-    - ⏳ Integrate satellite.js for propagating circular LEO orbits (ECI to ECF/Geodetic).
-    - ⏳ Develop functions to calculate satellite positions over the simulation timespan.
+    - ✅ Integrate satellite.js for propagating circular LEO orbits (ECI to ECF/Geodetic).
+    - ✅ Develop functions to calculate satellite positions over the simulation timespan.
 
 5.  **Task Scheduling Algorithm:**
     - ⏳ Implement logic to determine target visibility based on 30° FOV.
@@ -88,10 +88,10 @@ This plan outlines the core technical tasks to deliver the MVP, focusing on user
     - ⏳ Store task schedule in React state.
 
 6.  **Cesium Visualization Layer:**
-    - ⏳ Render satellite orbits and animated positions on the globe.
+    - ✅ Render satellite orbits and animated positions on the globe. (Achieved for a single test satellite)
     - ⏳ Display targets as markers with labels.
     - ⏳ Implement visualization for active imaging tasks.
-    - ⏳ Integrate Cesium clock/timeline for simulation control.
+    - ✅ Integrate Cesium clock/timeline for simulation control.
 
 7.  **Display & Interaction (within panels):**
     - ⏳ Create a list view for the generated task schedule in `TaskSchedulePanel`.
@@ -99,7 +99,7 @@ This plan outlines the core technical tasks to deliver the MVP, focusing on user
     - ⏳ Ensure responsive UI elements within the panels.
 
 8.  **Testing & Refinement:**
-    - ⏳ Test orbit propagation accuracy.
+    - 🟡 Test orbit propagation accuracy. (Initial visual test successful for one satellite)
     - ⏳ Validate task scheduling logic.
     - ✅ Perform usability testing on the core UI layout and panel interactions.
     - ⏳ Test functionality once implemented.

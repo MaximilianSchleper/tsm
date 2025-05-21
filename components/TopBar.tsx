@@ -5,7 +5,7 @@ const TopBar = () => {
   const {
     position,
     size,
-    setPosition,
+    // setPosition, // Removed as it's unused
     setSize,
     handleMouseDownDrag,
     // No resize for TopBar
