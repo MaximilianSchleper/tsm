@@ -42,6 +42,7 @@ const GlobeViewer = () => {
     baseLayerPicker={false}
     homeButton={false}
     sceneModePicker={false}
+    navigationHelpButton={false}
   >
     <ImageryLayer imageryProvider={imageryProvider} />
     <ImageryLayer imageryProvider={gridImageryProvider} />

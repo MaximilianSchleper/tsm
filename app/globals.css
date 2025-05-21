@@ -1,2 +1,196 @@
 @import "tailwindcss";
 @import "../public/cesium/Widgets/widgets.css";
+
+body, html, #__next, main {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden; /* Prevent scrollbars from main layout */
+  font-family: sans-serif;
+}
+
+.layout-container {
+  display: flex; /* Will be used by child elements for positioning */
+  flex-direction: column; /* Though children will be mostly absolute */
+  height: 100vh;
+  width: 100vw;
+  position: relative; /* Crucial for absolute positioning of children */
+}
+
+.globe-viewer-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1; /* Behind UI elements */
+}
+
+/* Draggable Window Base Styles - Enhanced Sci-Fi Update */
+.draggable-window {
+  position: absolute; /* Managed by component state */
+  z-index: 5;
+  border: 1px solid #FFB74D; /* Light Orange Border */
+  background-color: rgba(20, 20, 25, 0.55); /* Darker, even more transparent base */
+  backdrop-filter: blur(12px); /* Slightly increased blur */
+  -webkit-backdrop-filter: blur(12px); /* Safari support */
+  color: #E0E0E0; /* Light grey text for readability */
+  border-radius: 8px; /* Slightly more rounded */
+  /* Enhanced shadow with orange glow */
+  box-shadow: 0 0 8px rgba(255, 183, 77, 0.5), /* Subtle orange glow */
+              0 4px 10px rgba(0, 0, 0, 0.4); /* Existing drop shadow, slightly softer */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Important for resize and content */
+}
+
+.window-header {
+  padding: 10px 14px; /* Adjusted padding */
+  background-color: rgba(35, 35, 40, 0.7); /* Adjusted alpha */
+  color: #FFB74D; /* Orange header text */
+  cursor: grab;
+  border-bottom: 1px solid #FFB74D; /* Light Orange Border */
+  user-select: none; /* Prevent text selection while dragging */
+  font-weight: bold;
+  text-transform: uppercase; /* Sci-fi feel */
+  letter-spacing: 0.5px;  /* Sci-fi feel */
+}
+
+.window-header:active {
+  cursor: grabbing;
+}
+
+/* New class for main-header styling within content */
+.content-main-header-style {
+  color: #FFB74D; 
+  font-weight: bold;
+  text-transform: uppercase; 
+  letter-spacing: 0.5px;
+  font-size: 1em; /* Matches .window-header implicit size */
+  margin-top: 15px; 
+  margin-bottom: 10px; /* Increased bottom margin */
+  border-top: 1px solid #555; 
+  padding-top: 10px;
+  text-align: left; /* Ensure alignment */
+}
+
+.window-content {
+  padding: 12px;
+  flex-grow: 1;
+  overflow-y: auto; /* If content exceeds panel height */
+  display: flex;
+  flex-direction: column; /* Ensure placeholders take space */
+}
+
+.resize-handle {
+  width: 18px; /* Slightly larger */
+  height: 18px; /* Slightly larger */
+  background-color: rgba(255, 183, 77, 0.25); /* More transparent handle */
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  cursor: nwse-resize;
+  border-top-left-radius: 6px; /* Match window rounding */
+  border-left: 1px solid #FFB74D; /* Light Orange Border */
+  border-top: 1px solid #FFB74D; /* Light Orange Border */
+}
+
+/* Top Bar (will also be a draggable window, but might not be resizable) */
+.top-bar-window {
+  /* Extends draggable-window, specific positioning/sizing by component state */
+  /* For now, let its content define initial height, width can be explicit */
+  display: flex; /* Overriding flex-direction from draggable-window if header is not separate */
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  /* Padding is removed from here, applied by .window-header or .window-content if used for top bar */
+  /* If top bar has no separate .window-header, its own padding needs to be set if desired */
+  /* For TopBar, the entire .draggable-window IS the header for dragging */
+  padding: 0 10px; /* Keep padding if it serves as the header directly */
+  background-color: rgba(35, 35, 40, 0.8); /* Consistent with header, slightly more opaque for a bar */
+  color: #FFB74D; /* Match header text color */
+  /* border: 1px solid #FFB74D; Inherits from .draggable-window */
+  /* Explicitly ensure bottom border if it was previously none, or rely on the main .draggable-window border */
+  /* If .draggable-window provides all borders, this might not be needed, but ensures it if any override happens */
+  border-bottom: 1px solid #FFB74D !important; /* Ensure this border is visible */
+}
+
+.top-bar-window .search-placeholder,
+.top-bar-window .menu-button-placeholder {
+  background-color: rgba(20, 20, 25, 0.6);
+  border-color: #FFB74D;
+  color: #E0E0E0;
+}
+
+/* Panel specific titles and placeholders */
+.panel-title {
+  margin-top: 0;
+  /* border-bottom: 1px solid #555; No longer needed if header is used */
+  padding-bottom: 0; /* Adjusted */
+  font-size: 1em; /* Title inside header is part of header style */
+  color: #E0E0E0; /* General panel titles if not in header */
+}
+
+.placeholder-box {
+  border: 1px dashed #FFB74D; /* Orange dashed border */
+  padding: 10px;
+  margin-top: 10px; /* Add some space if it's the first element after a header */
+  background-color: rgba(25, 25, 30, 0.45); /* Darker, more transparent placeholder */
+  border-radius: 4px; /* Consistent rounding */
+  text-align: center;
+  flex-grow: 1; /* Allow placeholders to fill space in flex column */
+  color: #C0C0C0; /* Lighter grey text for placeholders */
+}
+
+.placeholder-box:first-child {
+  margin-top: 0; /* If it's the very first item in window-content */
+}
+
+.search-placeholder,
+.menu-button-placeholder {
+  border: 1px dashed #FFB74D; /* Orange dashed border */
+  padding: 5px 10px;
+  background-color: rgba(25, 25, 30, 0.7);
+  border-radius: 4px;
+  color: #FFB74D; /* Orange text for these specific placeholders */
+}
+
+/* Remove old overlay positioning - these are now general style containers if used, or replaced by draggable-window */
+.left-panel-overlay,
+.right-panel-overlay,
+.top-bar-overlay {
+  /* Remove position, top, left, right, bottom, width, height, z-index */
+  /* Keep background, border, color, padding, border-radius if they are to be used as part of the draggable window's content area styling */
+  /* For now, these specific classes might become redundant as .draggable-window and .window-content take over */
+  background-color: transparent; /* Let .draggable-window handle background */
+  border: none; /* Let .draggable-window handle border */
+  padding: 0; /* Let .window-content handle padding */
+  overflow-y: visible; /* Managed by .window-content */
+}
+
+.constellation-details-panel .panel-title,
+.satellite-details-panel .panel-title {
+  margin-bottom: 10px;
+}
+
+/* Specific panel adjustments if needed */
+.task-schedule-panel {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.task-schedule-panel .window-content {
+  display: flex;
+  flex-direction: column;
+  /* height: 100%; Removed, flex-grow on .window-content and .placeholder-box should handle it */
+}
+
+.task-schedule-panel .window-content .placeholder-box {
+  flex-grow: 1;
+}
+
+.task-schedule-panel .window-content .placeholder-box:first-of-type {
+  margin-bottom: 10px;
+}
