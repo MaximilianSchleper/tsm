@@ -16,6 +16,7 @@
     - Test satellite (ISS TLE) orbit propagation and animation.
 - 🎨 **Sci-fi Interface** - Dark theme with neon accents inspired by The Expanse
 - 📊 **Interactive Features** - Track satellites, view details, and explore the constellation
+- 🛰️ **Interactive Selection**: Click on a satellite in the 3D view to display its live details.
 
 ## Tech Stack
 

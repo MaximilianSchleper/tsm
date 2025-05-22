@@ -4,6 +4,7 @@ import { Viewer, ImageryLayer } from "resium";
 import * as Cesium from "cesium";
 import React, { useMemo } from 'react';
 import type { ReactNode } from 'react';
+import GlobeEventHandler from './GlobeEventHandler';
 
 // Define the window type with CESIUM_BASE_URL
 declare global {
@@ -19,10 +20,12 @@ if (typeof window !== 'undefined') {
 
 interface GlobeViewerProps {
   children?: ReactNode;
+  setSelectedSatellite?: (satellite: Cesium.Entity | null) => void;
 }
 
-const GlobeViewer: React.FC<GlobeViewerProps> = ({ children }) => {
-    // Create a dummy div for the credit container to hide default credits
+const GlobeViewer: React.FC<GlobeViewerProps> = ({ children, setSelectedSatellite }) => {
+  // console.log("[GlobeViewer] Component function executing.");
+
   const dummyCreditContainer = useMemo(() => 
      typeof document !== 'undefined' ? document.createElement('div') : undefined, []);
 
@@ -40,21 +43,24 @@ const GlobeViewer: React.FC<GlobeViewerProps> = ({ children }) => {
     color: Cesium.Color.GREY.withAlpha(0.5),
   }), []);
 
-  const viewer = <
+  const viewerInstance = <
     Viewer full
     creditContainer={dummyCreditContainer}
     baseLayerPicker={false}
-    homeButton={false}
+    homeButton={true}
     sceneModePicker={false}
     navigationHelpButton={false}
+    selectionIndicator={true}
+    infoBox={false}
   >
     <ImageryLayer imageryProvider={imageryProvider} />
     <ImageryLayer imageryProvider={gridImageryProvider} />
+    <GlobeEventHandler setSelectedSatellite={setSelectedSatellite} />
     {children}
   </Viewer>;
 
   return (
-    viewer
+    viewerInstance
   );
 }
 

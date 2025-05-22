@@ -95,7 +95,7 @@ This plan outlines the core technical tasks to deliver the MVP, focusing on user
 
 7.  **Display & Interaction (within panels):**
     - ⏳ Create a list view for the generated task schedule in `TaskSchedulePanel`.
-    - ⏳ Display satellite details in `SatelliteDetailsPanel` when a satellite is selected.
+    - ✅ Display satellite details in `SatelliteDetailsPanel` when a satellite is selected.
     - ⏳ Ensure responsive UI elements within the panels.
 
 8.  **Testing & Refinement:**

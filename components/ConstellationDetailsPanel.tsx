@@ -36,23 +36,19 @@ const ConstellationDetailsPanel = () => {
       console.error("Cesium viewer is not available");
       return;
     }
-    console.log("--- Adding Test Satellite ---");
 
     // ISS TLE
     const tleLine1 = '1 25544U 98067A   25141.33820368  .00008211  00000+0  15360-3 0  9995';
     const tleLine2 = '2 25544  51.6382  80.0845 0002544 127.0828  16.1893 15.49641181510997';
     
     const satrec = satellite.twoline2satrec(tleLine1, tleLine2);
-    console.log("Satellite Record (satrec):", satrec);
 
     if (satrec.error !== satellite.SatRecError.None) {
       console.error("TLE Parsing Error. Code:", satrec.error);
       return;
     }
-    console.log("TLE Parsed Successfully.");
 
     const positionProperty = new Cesium.SampledPositionProperty();
-    console.log("SampledPositionProperty created.");
 
     // Time range: May 21, 2025, 05:09 PM CEST to +24 hours
     const startTime = new Date('2025-05-21T17:09:00+02:00'); // CEST is UTC+2
@@ -61,16 +57,12 @@ const ConstellationDetailsPanel = () => {
     const timeStepSeconds = 60;
     let samplesAdded = 0;
 
-    console.log(`Starting propagation loop from ${startTime.toISOString()} to ${endTime.toISOString()} with ${timeStepSeconds}s step.`);
-
     for (let currentTime = new Date(startTime.getTime()); currentTime <= endTime; currentTime.setTime(currentTime.getTime() + timeStepSeconds * 1000)) {
       const jsDate = new Date(currentTime);
 
-      // Use satellite.propagate with a JavaScript Date object
       const positionAndVelocity = satellite.propagate(satrec, jsDate);
       
       if (!positionAndVelocity || typeof positionAndVelocity.position === 'boolean' || !positionAndVelocity.position) {
-        console.warn(`Propagation failed or returned invalid position for date: ${jsDate.toISOString()}`);
         continue;
       }
 
@@ -85,7 +77,6 @@ const ConstellationDetailsPanel = () => {
       const transform = Cesium.Transforms.computeIcrfToFixedMatrix(cesiumJulianDate);
 
       if (!transform) {
-        console.warn(`Failed to compute IcrfToFixedMatrix for date: ${jsDate.toISOString()}`);
         continue;
       }
 
@@ -97,17 +88,10 @@ const ConstellationDetailsPanel = () => {
 
       positionProperty.addSample(cesiumJulianDate, positionEcef);
       samplesAdded++;
-      if (samplesAdded <= 5) { // Log first few successful samples
-        console.log(`Sample ${samplesAdded} added: Time: ${jsDate.toISOString()}, ECI: {x: ${positionEciKm.x.toFixed(3)}, y: ${positionEciKm.y.toFixed(3)}, z: ${positionEciKm.z.toFixed(3)}}, ECEF: {x: ${positionEcef.x.toFixed(0)}, y: ${positionEcef.y.toFixed(0)}, z: ${positionEcef.z.toFixed(0)}}`);
-      }
     }
-    console.log(`Total samples added to SampledPositionProperty: ${samplesAdded}`);
-    console.log("SampledPositionProperty after adding samples:", positionProperty);
 
-    // --- Create Cesium Entity ---
     if (viewer.entities.getById('test-satellite-iss')) {
       viewer.entities.removeById('test-satellite-iss');
-      console.log("Removed existing test satellite entity.");
     }
 
     const satelliteEntity = viewer.entities.add({
@@ -118,13 +102,17 @@ const ConstellationDetailsPanel = () => {
         stop: Cesium.JulianDate.fromDate(endTime),
       })]),
       position: positionProperty,
-      point: {
-        pixelSize: 5,
-        color: Cesium.Color.RED,
+      billboard: {
+        image: '/satellite-dish.png',
+        width: 40,
+        height: 40,
       },
       path: {
         show: true,
-        material: Cesium.Color.YELLOW,
+        material: new Cesium.PolylineDashMaterialProperty({
+          color: Cesium.Color.YELLOW,
+          dashLength: 16.0,
+        }),
         width: 2,
         leadTime: 3600, // 1 hour in seconds
         trailTime: 3600, // 1 hour in seconds
@@ -132,18 +120,11 @@ const ConstellationDetailsPanel = () => {
       },
     });
 
-    console.log("Satellite entity added to viewer:", satelliteEntity);
-
-    // Optional: Set clock to match sample data times and start animation
     viewer.clock.startTime = Cesium.JulianDate.fromDate(startTime);
     viewer.clock.stopTime = Cesium.JulianDate.fromDate(endTime);
     viewer.clock.currentTime = Cesium.JulianDate.fromDate(startTime);
-    viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP; // Loop when animation reaches the end
-    viewer.clock.multiplier = 60; // Speed up animation (e.g., 60x real-time)
-    // viewer.timeline.zoomTo(Cesium.JulianDate.fromDate(startTime), Cesium.JulianDate.fromDate(endTime)); // Ensure timeline shows full range
-
-    // viewer.trackedEntity = satelliteEntity; // Remove or comment out to prevent auto-tracking
-    console.log("Satellite entity added. Viewer will not auto-track it.");
+    viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP;
+    viewer.clock.multiplier = 60;
 
   };
 
