@@ -15,33 +15,40 @@ const GlobeEventHandler: React.FC<GlobeEventHandlerProps> = ({ setSelectedSatell
   useEffect(() => {
     if (viewer && setSelectedSatellite) {
       const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+      // console.log("[GlobeEventHandler] ScreenSpaceEventHandler created.");
       handler.setInputAction((movement: Cesium.ScreenSpaceEventHandler.PositionedEvent) => {
-        const pickedObject = viewer.scene.pick(movement.position);
+        const pickedObject: unknown = viewer.scene.pick(movement.position);
+        // console.log("[GlobeEventHandler] Clicked. pickedObject:", pickedObject);
         
-        if (pickedObject && typeof pickedObject === 'object' && 'id' in pickedObject) {
-          const pickedId = (pickedObject as { id: unknown }).id;
+        let entityToSet: Cesium.Entity | null = null;
 
-          if (pickedId instanceof Cesium.Entity) {
-            const entity = pickedId;
-            if (entity.id === 'test-satellite-iss') {
-              ReactDOM.flushSync(() => {
-                setSelectedSatellite(entity);
-              });
-            } else {
-              ReactDOM.flushSync(() => {
-                setSelectedSatellite(null);
-              });
-            }
+        if (
+          pickedObject &&
+          typeof pickedObject === 'object' &&
+          'id' in pickedObject &&
+          pickedObject.id instanceof Cesium.Entity
+        ) {
+          const pickedEntity = pickedObject.id; // TypeScript now knows pickedEntity is Cesium.Entity
+          
+          if (pickedEntity.id === 'test-satellite-iss') {
+            // console.log('[GlobeEventHandler] Test satellite clicked:', pickedEntity);
+            entityToSet = pickedEntity;
+            // console.log("[GlobeEventHandler] Called setSelectedSatellite (via flushSync) with entity:", pickedEntity);
           } else {
-            ReactDOM.flushSync(() => {
-              setSelectedSatellite(null);
-            });
+            // console.log("[GlobeEventHandler] Called setSelectedSatellite (via flushSync) with null (other entity clicked).");
+            // entityToSet remains null, handled by the final flushSync
           }
         } else {
-          ReactDOM.flushSync(() => {
-            setSelectedSatellite(null);
-          });
+          // console.log("[GlobeEventHandler] Called setSelectedSatellite (via flushSync) with null (no valid entity id or picked object).");
+          // entityToSet remains null, handled by the final flushSync
         }
+
+        ReactDOM.flushSync(() => {
+          if (setSelectedSatellite) { // Check if setSelectedSatellite is defined before calling
+            setSelectedSatellite(entityToSet);
+          }
+        });
+
       }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
       return () => {

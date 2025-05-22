@@ -35,11 +35,15 @@ const SatelliteDetailsPanel: React.FC<SatelliteDetailsPanelProps> = ({ selectedS
 
   useEffect(() => {
     // console.log("[SatelliteDetailsPanel] useEffect running. selectedSatellite:", selectedSatellite, "Viewer defined:", !!viewer);
+    // eslint-disable-next-line
     if (selectedSatellite && selectedSatellite.position && viewer) {
       // console.log("[SatelliteDetailsPanel] useEffect - conditions met for updating position.");
       const updatePosition = () => {
-        const positionVal = selectedSatellite.position?.getValue(viewer.clock.currentTime, new Cesium.Cartesian3());
-        // console.log("[SatelliteDetailsPanel] updatePosition - positionVal:", positionVal);
+        const positionVal = selectedSatellite?.position?.getValue(
+          viewer?.clock?.currentTime, 
+          new Cesium.Cartesian3()
+        );
+
         if (positionVal) {
           setCurrentPosition(positionVal);
         }
@@ -49,11 +53,16 @@ const SatelliteDetailsPanel: React.FC<SatelliteDetailsPanelProps> = ({ selectedS
       updatePosition();
 
       // Subscribe to clock ticks to update position dynamically
-      viewer.clock.onTick.addEventListener(updatePosition);
+      // Ensure viewer.clock exists before trying to add/remove listener
+      if (viewer.clock) {
+        viewer.clock.onTick.addEventListener(updatePosition);
+      }
 
       // Cleanup function to remove the event listener
       return () => {
-        viewer.clock.onTick.removeEventListener(updatePosition);
+        if (viewer.clock) {
+          viewer.clock.onTick.removeEventListener(updatePosition);
+        }
       };
     } else {
       setCurrentPosition(null); // Clear position if no satellite selected

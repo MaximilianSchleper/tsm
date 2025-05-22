@@ -55,7 +55,9 @@ const ConstellationDetailsPanel = () => {
     const durationHours = 24;
     const endTime = new Date(startTime.getTime() + durationHours * 60 * 60 * 1000);
     const timeStepSeconds = 60;
-    let samplesAdded = 0;
+    // let samplesAdded = 0; // Commented out as it's unused
+
+    // console.log(`Starting propagation loop from ${startTime.toISOString()} to ${endTime.toISOString()} with ${timeStepSeconds}s step.`);
 
     for (let currentTime = new Date(startTime.getTime()); currentTime <= endTime; currentTime.setTime(currentTime.getTime() + timeStepSeconds * 1000)) {
       const jsDate = new Date(currentTime);
@@ -87,14 +89,19 @@ const ConstellationDetailsPanel = () => {
       );
 
       positionProperty.addSample(cesiumJulianDate, positionEcef);
-      samplesAdded++;
+      // samplesAdded++;
     }
 
+    // Remove existing entity if it exists
     if (viewer.entities.getById('test-satellite-iss')) {
       viewer.entities.removeById('test-satellite-iss');
+      // console.log("Removed existing test satellite entity.");
     }
 
-    const satelliteEntity = viewer.entities.add({
+    // Add the new satellite entity
+    // The return value of viewer.entities.add (the entity itself) is not stored 
+    // in satelliteEntity anymore as satelliteEntity was unused.
+    viewer.entities.add({
       id: 'test-satellite-iss',
       name: 'Test Satellite (ISS)',
       availability: new Cesium.TimeIntervalCollection([new Cesium.TimeInterval({
