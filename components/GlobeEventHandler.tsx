@@ -30,17 +30,18 @@ const GlobeEventHandler: React.FC<GlobeEventHandlerProps> = ({ setSelectedSatell
         ) {
           const pickedEntity = pickedObject.id; // TypeScript now knows pickedEntity is Cesium.Entity
           
-          if (pickedEntity.id === 'test-satellite-iss') {
-            // console.log('[GlobeEventHandler] Test satellite clicked:', pickedEntity);
+          // Check if this is any satellite (test satellite or demo constellation satellite)
+          if (pickedEntity.id === 'test-satellite-iss' || 
+              (typeof pickedEntity.id === 'string' && pickedEntity.id.startsWith('demo-satellite-'))) {
+            console.log('[GlobeEventHandler] Satellite clicked:', pickedEntity.name, 'ID:', pickedEntity.id);
             entityToSet = pickedEntity;
-            // console.log("[GlobeEventHandler] Called setSelectedSatellite (via flushSync) with entity:", pickedEntity);
           } else {
-            // console.log("[GlobeEventHandler] Called setSelectedSatellite (via flushSync) with null (other entity clicked).");
-            // entityToSet remains null, handled by the final flushSync
+            // Not a satellite - clear selection
+            entityToSet = null;
           }
         } else {
-          // console.log("[GlobeEventHandler] Called setSelectedSatellite (via flushSync) with null (no valid entity id or picked object).");
-          // entityToSet remains null, handled by the final flushSync
+          // No valid entity picked - clear selection
+          entityToSet = null;
         }
 
         ReactDOM.flushSync(() => {
