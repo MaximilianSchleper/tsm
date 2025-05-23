@@ -13,13 +13,13 @@ These user stories outline the Minimum Viable Product (MVP) for a satellite cons
     - ⏳ Add country outlines for better geographical reference (optional for initial MVP if time constrained).
 
 2.  **MVP Satellite Configuration**
-    - As a user, I can configure up to 10 satellites by specifying:
-        - Altitude (300–2000 km, numeric input or slider).
-        - Inclination (0–180°, numeric input or presets: 53°, 90°, 98°).
-        - Right Ascension of the Ascending Node (RAAN) (0–360°, numeric or auto-calculated for even spacing).
-        - True Anomaly (0–360°, numeric or auto-calculated for even spacing).
-    - As a user, I can select LEO presets (e.g., 550 km/53°, 800 km/90°, 600 km/98°) to autofill altitude and inclination for all satellites.
-    - As a user, I can click "Generate Demo Constellation" to load a default of 8 satellites in 2 orbital planes (4 satellites per plane), at 550 km altitude, 90° inclination, with RAANs (e.g., 0°, 180°) and true anomalies evenly spaced (e.g., 0°, 90°, 180°, 270°).
+    - ✅ As a user, I can configure up to 10 satellites by specifying:
+        - ✅ Altitude (300–2000 km, numeric input or slider).
+        - ✅ Inclination (0–180°, numeric input or presets: 53°, 90°, 98°).
+        - ✅ Right Ascension of the Ascending Node (RAAN) (0–360°, numeric or auto-calculated for even spacing).
+        - ✅ True Anomaly (0–360°, numeric or auto-calculated for even spacing).
+    - ⏳ As a user, I can select LEO presets (e.g., 550 km/53°, 800 km/90°, 600 km/98°) to autofill altitude and inclination for all satellites.
+    - ✅ As a user, I can click "Generate Demo Constellation" to load a default of 8 satellites in 4 orbital planes (2 satellites per plane), at 550 km altitude, 65° inclination, with RAANs (0°, 90°, 180°, 270°) and true anomalies distributed for optimal global coverage (45°, 135°, 225°, 315°).
 
 3.  **MVP Target Definition**
     - As a user, I can define up to 5 targets by:
@@ -68,10 +68,10 @@ This plan outlines the core technical tasks to deliver the MVP, focusing on user
     - ⏳ (Optional) Add country outlines to the globe.
 
 2.  **Satellite Configuration Module (in `ConstellationDetailsPanel`):**
-    - ⏳ Develop input forms for satellite orbital parameters (altitude, inclination, RAAN, true anomaly) with validation.
+    - ✅ Develop input forms for satellite orbital parameters (altitude, inclination, RAAN, true anomaly) with validation.
     - ⏳ Implement LEO preset selections.
-    - ⏳ Create logic for "Generate Demo Constellation" button.
-    - ⏳ Store satellite data in React state.
+    - ✅ Create logic for "Generate Demo Constellation" button.
+    - ✅ Store satellite data in React state.
 
 3.  **Target Definition Module (in `TaskSchedulePanel`):**
     - ⏳ Implement input methods for targets (city name with Nominatim, lat/lon, globe click).
@@ -88,7 +88,7 @@ This plan outlines the core technical tasks to deliver the MVP, focusing on user
     - ⏳ Store task schedule in React state.
 
 6.  **Cesium Visualization Layer:**
-    - ✅ Render satellite orbits and animated positions on the globe. (Achieved for a single test satellite)
+    - ✅ Render satellite orbits and animated positions on the globe. (Achieved for demo constellation)
     - ⏳ Display targets as markers with labels.
     - ⏳ Implement visualization for active imaging tasks.
     - ✅ Integrate Cesium clock/timeline for simulation control.

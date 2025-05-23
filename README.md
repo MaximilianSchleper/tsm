@@ -9,11 +9,11 @@
 ## Features
 
 - 🛰️ **Satellite Management** - Input and manage up to 10 satellites using Two-Line Elements (TLEs)
+- 🌟 **Demo Constellation** - Generate an 8-satellite constellation with optimized global coverage
 - 📋 **Task Scheduling** - Define up to 50 imaging tasks with locations and time windows
 - 🎯 **Optimization** - Generate efficient schedules for satellite imaging tasks
 - 🌍 **3D Visualization** - Interactive 3D globe with satellite orbits and task locations
-- ⚡ **Real-time Animation** - Timeline-based visualization of satellite movements and task activations
-    - Test satellite (ISS TLE) orbit propagation and animation.
+- ⚡ **Real-time Animation** - Timeline-based visualization of satellite movements with 7-day simulation
 - 🎨 **Sci-fi Interface** - Dark theme with neon accents inspired by The Expanse
 - 📊 **Interactive Features** - Track satellites, view details, and explore the constellation
 - 🛰️ **Interactive Selection**: Click on a satellite in the 3D view to display its live details.
@@ -54,18 +54,24 @@ bun dev || pnpm dev || yarn dev || npm run dev
    - View satellite list with orbit details
    - Edit or remove satellites
 
-2. **Task Scheduling**
+2. **Demo Constellation**
+   - Generate 8-satellite constellation with global coverage
+   - 4 orbital planes with optimized spacing (65° inclination)
+   - Color-coded satellites for easy identification
+   - 7-day simulation timeline
+
+3. **Task Scheduling**
    - Define imaging tasks with coordinates
    - Set time windows and priorities
    - Generate optimized schedules
 
-3. **3D Visualization**
+4. **3D Visualization**
    - Interactive globe with country outlines
    - Glowing satellite orbits
    - Task location markers
    - Timeline-based animation
 
-4. **Demo Mode**
+5. **Demo Mode**
    - Preloaded sample constellation
    - Example imaging tasks
    - One-click visualization

@@ -20,7 +20,7 @@ const SatelliteDetailsPanel: React.FC<SatelliteDetailsPanelProps> = ({ selectedS
     handleMouseDownResize, 
     isResizable 
   } = useDraggableResizable({
-    initialPosition: { top: 360, left: 1000 - 320 },
+    initialPosition: { top: 400, left: 1000 - 320 },
     initialSize: { width: 280, height: 220 },
     minWidth: 250,
     minHeight: 150,
