@@ -20,10 +20,10 @@ const SatelliteDetailsPanel: React.FC<SatelliteDetailsPanelProps> = ({ selectedS
     handleMouseDownResize, 
     isResizable 
   } = useDraggableResizable({
-    initialPosition: { top: 400, left: 1000 - 320 },
-    initialSize: { width: 280, height: 220 },
-    minWidth: 250,
-    minHeight: 150,
+    initialPosition: { top: 600, left: 1000 - 380 },
+    initialSize: { width: 280, height: 280 },
+    minWidth: 280,
+    minHeight: 280,
   });
 
   useEffect(() => {
@@ -86,20 +86,30 @@ const SatelliteDetailsPanel: React.FC<SatelliteDetailsPanelProps> = ({ selectedS
       <div className="window-content">
         {selectedSatellite ? (
           <div>
-            <p>Name: {selectedSatellite.name ?? 'N/A'}</p>
-            <p>ID: {selectedSatellite.id}</p>
+            {/* Satellite Info Section */}
+            <div className="mb-4 p-3 bg-gray-800 rounded border border-gray-600">
+              <h3 className="text-sm font-semibold text-gray-300 mb-2">Satellite Info</h3>
+              <div className="text-xs text-gray-400 space-y-1">
+                <div>Name: <span className="text-white">{selectedSatellite.name ?? 'N/A'}</span></div>
+                <div>ID: <span className="text-white">{selectedSatellite.id}</span></div>
+              </div>
+            </div>
+
+            {/* Position Section */}
             {currentPosition && (
-              <div>
-                <p>Position (ECEF):</p>
-                <p>X: {currentPosition.x.toFixed(0)} m</p>
-                <p>Y: {currentPosition.y.toFixed(0)} m</p>
-                <p>Z: {currentPosition.z.toFixed(0)} m</p>
+              <div className="mb-4 p-3 bg-gray-800 rounded border border-gray-600">
+                <h3 className="text-sm font-semibold text-gray-300 mb-2">Position (ECEF)</h3>
+                <div className="text-xs text-gray-400 space-y-1">
+                  <div>X: <span className="text-white">{currentPosition.x.toFixed(0)} m</span></div>
+                  <div>Y: <span className="text-white">{currentPosition.y.toFixed(0)} m</span></div>
+                  <div>Z: <span className="text-white">{currentPosition.z.toFixed(0)} m</span></div>
+                </div>
               </div>
             )}
           </div>
         ) : (
-          <div className="placeholder-box">
-            No satellite selected..
+          <div className="p-3 bg-gray-800 rounded border border-gray-600">
+            <div className="text-sm text-gray-500 text-center">No satellite selected..</div>
           </div>
         )}
       </div>
