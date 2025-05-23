@@ -2,35 +2,50 @@
 
 # Satellite Constellation Manager
 
-### A Next.js-based tool for managing satellite constellations, visualizing orbits, and optimizing imaging task scheduling with a sci-fi inspired interface.
+### A Next.js-based educational tool for satellite constellation management, orbital visualization, and coverage analysis with an interactive 3D interface.
 
 </div>
 
 ## Features
 
-- 🛰️ **Satellite Management** - Input and manage up to 10 satellites using Two-Line Elements (TLEs)
-- 🌟 **Demo Constellation** - Generate an 8-satellite constellation with optimized global coverage
-- 📋 **Task Scheduling** - Define up to 50 imaging tasks with locations and time windows
-- 🎯 **Optimization** - Generate efficient schedules for satellite imaging tasks
-- 🌍 **3D Visualization** - Interactive 3D globe with satellite orbits and task locations
-- ⚡ **Real-time Animation** - Timeline-based visualization of satellite movements with 7-day simulation
-- 🎨 **Sci-fi Interface** - Dark theme with neon accents inspired by The Expanse
-- 📊 **Interactive Features** - Track satellites, view details, and explore the constellation
-- 🛰️ **Interactive Selection**: Click on a satellite in the 3D view to display its live details.
+- 🛰️ **Demo Constellation** - Generate an 8-satellite constellation with customizable orbital planes
+- 🎚️ **Altitude Control** - Real-time altitude adjustment (160-2000km) for each orbital plane
+- 📊 **Coverage Analysis** - Calculate and visualize global coverage percentage
+- 🌍 **3D Visualization** - Interactive 3D globe with satellite orbits and coverage zones
+- ⚡ **Real-time Animation** - Timeline-based visualization with 7-day simulation
+- 🎯 **Interactive Selection** - Click satellites or coverage zones to view details
+- 🎨 **Modern UI** - Clean, professional interface with draggable panels
+- 📈 **Educational Value** - Learn how altitude affects satellite coverage
+- 🌐 **Color-coded Planes** - 4 RAAN-based orbital planes with distinct colors
+
+## Key Capabilities
+
+### **Constellation Generation**
+- **4 Orbital Planes**: RAAN 0°, 90°, 180°, 270° for global coverage
+- **2 Satellites per Plane**: 8 total satellites with optimal spacing
+- **Apply Changes System**: Modify altitudes and regenerate constellation
+- **Realistic Orbits**: Uses accurate TLE generation and propagation
+
+### **Coverage Analysis**
+- **Visual Coverage Zones**: Color-coded coverage circles for each satellite
+- **Global Coverage Calculation**: Real-time percentage calculation
+- **Altitude Impact**: See how higher/lower orbits affect coverage
+- **Pause-only Analysis**: Coverage shown when animation is paused
+
+### **Interactive Features**
+- **Satellite Selection**: Click any satellite to view live details
+- **Coverage Zone Clicking**: Click coverage zones to select parent satellite
+- **Draggable Panels**: Constellation details and satellite info panels
+- **Real-time Position**: Live ECEF coordinates for selected satellites
 
 ## Tech Stack
 
 - ⚡ **[Next.js](https://nextjs.org/)** - React Framework for Production
-- 🔥 **[App Router](https://nextjs.org/docs/app)** - Latest Next.js features
 - 🎨 **[Tailwind CSS](https://tailwindcss.com/)** - Utility-First CSS Framework
 - 📦 **[TypeScript](https://www.typescriptlang.org/)** - Type Safety
 - 🌍 **[Resium/CesiumJS](https://resium.darwineducation.com/)** - 3D Globe Visualization
 - 🛰️ **[Satellite.js](https://github.com/shashwatak/satellite-js)** - Orbital Calculations
-- 📝 **[ESLint](https://eslint.org/)** - Code Quality
-- 🛠 **[Prettier](https://prettier.io/)** - Code Formatting
-- 🐶 **[Husky](https://typicode.github.io/husky/#/)** - Git Hooks
-- 🚫 **[lint-staged](https://github.com/okonet/lint-staged)** - Staged File Linting
-- 📄 **[commitlint](https://commitlint.js.org/#/)** - Commit Message Linting
+- 📐 **Custom Coverage Utils** - Spherical geometry for coverage analysis
 
 ## Getting Started
 
@@ -47,50 +62,33 @@ bun i || pnpm i || yarn || npm i
 bun dev || pnpm dev || yarn dev || npm run dev
 ```
 
-## Core Functionality
+## Usage Guide
 
-1. **Satellite Management**
-   - Add satellites using TLE data
-   - View satellite list with orbit details
-   - Edit or remove satellites
+### **1. Generate Constellation**
+1. Click "Generate Demo Constellation" to create 8 satellites
+2. View constellation status and configuration details
+3. Watch satellites orbit in the 3D visualization
 
-2. **Demo Constellation**
-   - Generate 8-satellite constellation with global coverage
-   - 4 orbital planes with optimized spacing (65° inclination)
-   - Color-coded satellites for easy identification
-   - 7-day simulation timeline
+### **2. Adjust Altitudes**
+1. Use the RAAN-labeled sliders to modify plane altitudes
+2. See live altitude values (160km - 2000km LEO range)
+3. Click "Apply Changes" to regenerate with new altitudes
 
-3. **Task Scheduling**
-   - Define imaging tasks with coordinates
-   - Set time windows and priorities
-   - Generate optimized schedules
+### **3. Analyze Coverage**
+1. Pause the animation (spacebar or UI controls)
+2. Click "Show Coverage" to display coverage zones
+3. View global coverage percentage in real-time
+4. Click satellites or zones to see details
 
-4. **3D Visualization**
-   - Interactive globe with country outlines
-   - Glowing satellite orbits
-   - Task location markers
-   - Timeline-based animation
+### **4. Interactive Exploration**
+- **Satellite Selection**: Click any satellite to view live details
+- **Coverage Zones**: Click colored coverage areas to select satellites
+- **Panel Management**: Drag and resize information panels
+- **Animation Control**: Play/pause to explore different time periods
 
-5. **Demo Mode**
-   - Preloaded sample constellation
-   - Example imaging tasks
-   - One-click visualization
+## Educational Applications
 
-## Available Scripts
-
-| **Script**   | **Description**                                      |
-| ------------ | ---------------------------------------------------- |
-| `dev`        | Runs the app in development mode                     |
-| `build`      | Builds the app for production                        |
-| `start`      | Runs the built app in production mode                |
-| `preview`    | Builds and serves the app in production mode         |
-| `lint`       | Runs ESLint on the project                           |
-| `type-check` | Runs TypeScript type checker                         |
-| `fmt`        | Formats code with Prettier                           |
-| `fmt:check`  | Checks code formatting with Prettier                 |
-
-## After Installation Checklist
-
-- [ ] Update `package.json` with your project details
-- [ ] Update `README.md` with your project details
-- [ ] Update `LICENSE` with your name and year
+- **Orbital Mechanics**: Understand how altitude affects orbital parameters
+- **Coverage Planning**: Learn satellite constellation design principles  
+- **Space Systems**: Explore real-world satellite constellation concepts
+- **STEM Education**: Interactive learning for aerospace engineering concepts

@@ -8,7 +8,6 @@ interface SatelliteDetailsPanelProps {
 }
 
 const SatelliteDetailsPanel: React.FC<SatelliteDetailsPanelProps> = ({ selectedSatellite }) => {
-  // console.log("[SatelliteDetailsPanel] Received props - selectedSatellite:", selectedSatellite);
   const { viewer } = useCesium();
   const [currentPosition, setCurrentPosition] = useState<Cesium.Cartesian3 | null>(null);
 
@@ -20,10 +19,10 @@ const SatelliteDetailsPanel: React.FC<SatelliteDetailsPanelProps> = ({ selectedS
     handleMouseDownResize, 
     isResizable 
   } = useDraggableResizable({
-    initialPosition: { top: 600, left: 1000 - 380 },
-    initialSize: { width: 280, height: 280 },
-    minWidth: 280,
-    minHeight: 280,
+    initialPosition: { top: 630, left: 1000 - 420 },
+    initialSize: { width: 400, height: 200 },
+    minWidth: 400,
+    minHeight: 200,
   });
 
   useEffect(() => {
@@ -34,10 +33,7 @@ const SatelliteDetailsPanel: React.FC<SatelliteDetailsPanelProps> = ({ selectedS
   }, []);
 
   useEffect(() => {
-    // console.log("[SatelliteDetailsPanel] useEffect running. selectedSatellite:", selectedSatellite, "Viewer defined:", !!viewer);
-    // eslint-disable-next-line
-    if (selectedSatellite && selectedSatellite.position && viewer) {
-      // console.log("[SatelliteDetailsPanel] useEffect - conditions met for updating position.");
+    if (selectedSatellite?.position && viewer) {
       const updatePosition = () => {
         const positionVal = selectedSatellite?.position?.getValue(
           viewer?.clock?.currentTime, 
@@ -69,7 +65,6 @@ const SatelliteDetailsPanel: React.FC<SatelliteDetailsPanelProps> = ({ selectedS
     }
   }, [selectedSatellite, viewer]);
 
-  // console.log("[SatelliteDetailsPanel] Rendering with currentPosition:", currentPosition);
   return (
     <div
       className="draggable-window panel satellite-details-panel"
@@ -85,25 +80,33 @@ const SatelliteDetailsPanel: React.FC<SatelliteDetailsPanelProps> = ({ selectedS
       </div>
       <div className="window-content">
         {selectedSatellite ? (
-          <div>
+          <div className="grid grid-cols-2 gap-3">
             {/* Satellite Info Section */}
-            <div className="mb-4 p-3 bg-gray-800 rounded border border-gray-600">
+            <div className="p-3 bg-gray-800 rounded border border-gray-600">
               <h3 className="text-sm font-semibold text-gray-300 mb-2">Satellite Info</h3>
               <div className="text-xs text-gray-400 space-y-1">
                 <div>Name: <span className="text-white">{selectedSatellite.name ?? 'N/A'}</span></div>
                 <div>ID: <span className="text-white">{selectedSatellite.id}</span></div>
+                <div className="text-xs text-green-400 mt-2">
+                  💡 Click satellite or coverage zone
+                </div>
               </div>
             </div>
 
             {/* Position Section */}
-            {currentPosition && (
-              <div className="mb-4 p-3 bg-gray-800 rounded border border-gray-600">
+            {currentPosition ? (
+              <div className="p-3 bg-gray-800 rounded border border-gray-600">
                 <h3 className="text-sm font-semibold text-gray-300 mb-2">Position (ECEF)</h3>
                 <div className="text-xs text-gray-400 space-y-1">
                   <div>X: <span className="text-white">{currentPosition.x.toFixed(0)} m</span></div>
                   <div>Y: <span className="text-white">{currentPosition.y.toFixed(0)} m</span></div>
                   <div>Z: <span className="text-white">{currentPosition.z.toFixed(0)} m</span></div>
                 </div>
+              </div>
+            ) : (
+              <div className="p-3 bg-gray-800 rounded border border-gray-600">
+                <h3 className="text-sm font-semibold text-gray-300 mb-2">Position</h3>
+                <div className="text-xs text-gray-500">Loading position...</div>
               </div>
             )}
           </div>

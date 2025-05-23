@@ -15,10 +15,9 @@ const GlobeEventHandler: React.FC<GlobeEventHandlerProps> = ({ setSelectedSatell
   useEffect(() => {
     if (viewer && setSelectedSatellite) {
       const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
-      // console.log("[GlobeEventHandler] ScreenSpaceEventHandler created.");
+      
       handler.setInputAction((movement: Cesium.ScreenSpaceEventHandler.PositionedEvent) => {
         const pickedObject: unknown = viewer.scene.pick(movement.position);
-        // console.log("[GlobeEventHandler] Clicked. pickedObject:", pickedObject);
         
         let entityToSet: Cesium.Entity | null = null;
 
@@ -30,13 +29,24 @@ const GlobeEventHandler: React.FC<GlobeEventHandlerProps> = ({ setSelectedSatell
         ) {
           const pickedEntity = pickedObject.id; // TypeScript now knows pickedEntity is Cesium.Entity
           
-          // Check if this is any satellite (test satellite or demo constellation satellite)
-          if (pickedEntity.id === 'test-satellite-iss' || 
-              (typeof pickedEntity.id === 'string' && pickedEntity.id.startsWith('demo-satellite-'))) {
-            console.log('[GlobeEventHandler] Satellite clicked:', pickedEntity.name, 'ID:', pickedEntity.id);
+          // Handle coverage zone clicks - show satellite details for the zone's owner
+          if (typeof pickedEntity.id === 'string' && pickedEntity.id.startsWith('coverage-')) {
+            // Extract satellite ID from coverage zone ID (format: "coverage-demo-satellite-50001")
+            const satelliteId = pickedEntity.id.replace('coverage-', '');
+            
+            // Find the corresponding satellite entity
+            const satelliteEntity = viewer.entities.getById(satelliteId);
+            if (satelliteEntity) {
+              entityToSet = satelliteEntity;
+            } else {
+              entityToSet = null;
+            }
+          }
+          // Check if this is a demo constellation satellite
+          else if (typeof pickedEntity.id === 'string' && pickedEntity.id.startsWith('demo-satellite-')) {
             entityToSet = pickedEntity;
           } else {
-            // Not a satellite - clear selection
+            // Not a satellite or coverage zone - clear selection
             entityToSet = null;
           }
         } else {
