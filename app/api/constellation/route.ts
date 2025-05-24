@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     let altitudesArray: number[];
     if (typeof altitudesPerPlane === 'number') {
       // Single altitude - apply to all planes
-      altitudesArray = Array(numPlanes).fill(altitudesPerPlane);
+      altitudesArray = new Array<number>(numPlanes).fill(altitudesPerPlane);
     } else {
       // Array provided - validate it contains only numbers
       if (!altitudesPerPlane.every(alt => typeof alt === 'number')) {
