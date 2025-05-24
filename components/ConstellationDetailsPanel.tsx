@@ -663,144 +663,153 @@ const ConstellationDetailsPanel = () => {
         </div>
       </div>
       <div className="window-content">
-        {/* Status and Configuration in 2 columns */}
-        <div className="mb-4 grid grid-cols-2 gap-3">
-          {/* Constellation Status Section */}
-          <div className="p-3 bg-gray-800 rounded border border-gray-600">
-            <h3 className="text-sm font-semibold text-gray-300 mb-2">Status</h3>
-            <div className="text-xs text-gray-400 space-y-1">
-              <div>Type: <span className="text-white">
-                {constellationInfo.type === 'none' ? 'None' : 
-                 constellationInfo.type === 'demo' ? 'Demo' : 'Custom'}
-              </span></div>
-              <div>Satellites: <span className="text-white">{constellationInfo.satelliteCount}</span></div>
-              {constellationInfo.generatedAt && (
-                <div>Generated: <span className="text-white">
-                  {constellationInfo.generatedAt.toLocaleTimeString()}
-                </span></div>
-              )}
-              {constellationInfo.coverage && (
-                <div>Coverage Calc: <span className="text-white">
-                  {constellationInfo.coverage.calculatedAt.toLocaleTimeString()}
-                </span></div>
-              )}
+        {constellationInfo.type === 'none' ? (
+          // No satellites state - show only subtle demo button
+          <div className="flex flex-col items-center justify-center h-full space-y-4">
+            <div className="text-center">
+              <p className="text-sm text-gray-400 mb-4">No constellation loaded</p>
+              <button
+                onClick={generateDefaultConstellation}
+                className="px-4 py-2 bg-gray-600 hover:bg-gray-500 text-gray-200 rounded text-sm border border-gray-500"
+              >
+                Generate Demo Constellation
+              </button>
             </div>
           </div>
-
-          {/* Configuration Details Section */}
-          <div className="p-3 bg-gray-800 rounded border border-gray-600">
-            <h3 className="text-sm font-semibold text-gray-300 mb-2">Config</h3>
-            <div className="text-xs text-gray-400 space-y-1">
-              {constellationInfo.type === 'none' ? (
-                <div className="text-gray-500">No constellation loaded</div>
-              ) : (
-                <>
-                  <div>Planes: <span className="text-white">{constellationInfo.config.planes}</span></div>
-                  <div>Sats/Plane: <span className="text-white">{constellationInfo.config.satellitesPerPlane}</span></div>
-                  <div>Inclination: <span className="text-white">{constellationInfo.config.inclination}°</span></div>
-                  <div>Duration: <span className="text-white">{constellationInfo.config.simulationDays} days</span></div>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Constellation Controls */}
-        <div className="mb-4 p-3 bg-gray-800 rounded border border-gray-600">
-          <h3 className="text-sm font-semibold text-gray-300 mb-2">Constellation</h3>
-          <div className="space-y-3">
-            {/* Satellites and Planes Row */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs text-gray-400 block mb-1">Total Satellites (1-60)</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="60"
-                  value={customSatellites}
-                  onChange={(e) => setCustomSatellites(parseInt(e.target.value) ?? 1)}
-                  className="w-full px-2 py-1 text-xs bg-gray-700 border border-gray-600 rounded text-white"
-                />
+        ) : (
+          // Satellites exist - show all controls
+          <>
+            {/* Status and Configuration in 2 columns */}
+            <div className="mb-4 grid grid-cols-2 gap-3">
+              {/* Constellation Status Section */}
+              <div className="p-3 bg-gray-800 rounded border border-gray-600">
+                <h3 className="text-sm font-semibold text-gray-300 mb-2">Status</h3>
+                <div className="text-xs text-gray-400 space-y-1">
+                  <div>Type: <span className="text-white">
+                    {constellationInfo.type === 'demo' ? 'Demo' : 'Custom'}
+                  </span></div>
+                  <div>Satellites: <span className="text-white">{constellationInfo.satelliteCount}</span></div>
+                  {constellationInfo.generatedAt && (
+                    <div>Generated: <span className="text-white">
+                      {constellationInfo.generatedAt.toLocaleTimeString()}
+                    </span></div>
+                  )}
+                  {constellationInfo.coverage && (
+                    <div>Coverage Calc: <span className="text-white">
+                      {constellationInfo.coverage.calculatedAt.toLocaleTimeString()}
+                    </span></div>
+                  )}
+                </div>
               </div>
-              
-              <div>
-                <label className="text-xs text-gray-400 block mb-1">Number of Planes (1-10)</label>
-                <input
-                  type="number"
-                  min="1"
-                  max="10"
-                  value={customPlanes}
-                  onChange={(e) => {
-                    const newPlanes = parseInt(e.target.value) ?? 1;
-                    setCustomPlanes(newPlanes);
-                    // Resize altitudes array to match
-                    const newAltitudes = Array(newPlanes).fill(400).map((_, i) => customAltitudes[i] ?? 400);
-                    setCustomAltitudes(newAltitudes);
-                  }}
-                  className="w-full px-2 py-1 text-xs bg-gray-700 border border-gray-600 rounded text-white"
-                />
+
+              {/* Configuration Details Section */}
+              <div className="p-3 bg-gray-800 rounded border border-gray-600">
+                <h3 className="text-sm font-semibold text-gray-300 mb-2">Config</h3>
+                <div className="text-xs text-gray-400 space-y-1">
+                  <>
+                    <div>Planes: <span className="text-white">{constellationInfo.config.planes}</span></div>
+                    <div>Sats/Plane: <span className="text-white">{constellationInfo.config.satellitesPerPlane}</span></div>
+                    <div>Inclination: <span className="text-white">{constellationInfo.config.inclination}°</span></div>
+                    <div>Duration: <span className="text-white">{constellationInfo.config.simulationDays} days</span></div>
+                  </>
+                </div>
               </div>
             </div>
-            
-            {/* Dynamic Altitude Sliders */}
-            <div>
-              <label className="text-xs text-gray-400 block mb-2">Orbital Plane Altitudes</label>
-              <div className="space-y-2">
-                {customAltitudes.map((altitude, index) => {
-                  // Generate dynamic colors using HSL (same as constellation generation)
-                  const hue = (index * 360) / customPlanes;
-                  const saturation = 80; // 0.8 * 100
-                  const lightness = 60;   // 0.6 * 100
+
+            {/* Constellation Controls */}
+            <div className="mb-4 p-3 bg-gray-800 rounded border border-gray-600">
+              <h3 className="text-sm font-semibold text-gray-300 mb-2">Constellation</h3>
+              <div className="space-y-3">
+                {/* Satellites and Planes Row */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-gray-400 block mb-1">Total Satellites (1-60)</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="60"
+                      value={customSatellites}
+                      onChange={(e) => setCustomSatellites(parseInt(e.target.value) ?? 1)}
+                      className="w-full px-2 py-1 text-xs bg-gray-700 border border-gray-600 rounded text-white"
+                    />
+                  </div>
                   
-                  // Convert HSL to CSS color for sliders
-                  const hslColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-                  
-                  // RAAN calculation
-                  const raan = Math.round((index * 360) / customPlanes);
-                  
-                  return (
-                    <div key={index} className="space-y-1">
-                      <div className="flex justify-between items-center">
-                        <span 
-                          className="text-xs font-semibold"
-                          style={{ color: hslColor }}
-                        >
-                          RAAN {raan}°
-                        </span>
-                        <span className="text-xs text-white">{altitude} km</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-xs text-gray-500">160km</span>
-                        <input
-                          type="range"
-                          min="160"
-                          max="2000"
-                          step="10"
-                          value={altitude}
-                          onChange={(e) => {
-                            const newAltitudes = [...customAltitudes];
-                            newAltitudes[index] = parseInt(e.target.value);
-                            setCustomAltitudes(newAltitudes);
-                          }}
-                          className="flex-1 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
-                          style={{
-                            background: `linear-gradient(to right, ${hslColor} 0%, ${hslColor} ${((altitude - 160) / (2000 - 160)) * 100}%, #374151 ${((altitude - 160) / (2000 - 160)) * 100}%, #374151 100%)`
-                          }}
-                        />
-                        <span className="text-xs text-gray-500">2000km</span>
-                      </div>
-                    </div>
-                  );
-                })}
+                  <div>
+                    <label className="text-xs text-gray-400 block mb-1">Number of Planes (1-10)</label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="10"
+                      value={customPlanes}
+                      onChange={(e) => {
+                        const newPlanes = parseInt(e.target.value) ?? 1;
+                        setCustomPlanes(newPlanes);
+                        // Resize altitudes array to match
+                        const newAltitudes = Array(newPlanes).fill(400).map((_, i) => customAltitudes[i] ?? 400);
+                        setCustomAltitudes(newAltitudes);
+                      }}
+                      className="w-full px-2 py-1 text-xs bg-gray-700 border border-gray-600 rounded text-white"
+                    />
+                  </div>
+                </div>
+                
+                {/* Dynamic Altitude Sliders */}
+                <div>
+                  <label className="text-xs text-gray-400 block mb-2">Orbital Plane Altitudes</label>
+                  <div className="space-y-2">
+                    {customAltitudes.map((altitude, index) => {
+                      // Generate dynamic colors using HSL (same as constellation generation)
+                      const hue = (index * 360) / customPlanes;
+                      const saturation = 80; // 0.8 * 100
+                      const lightness = 60;   // 0.6 * 100
+                      
+                      // Convert HSL to CSS color for sliders
+                      const hslColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                      
+                      // RAAN calculation
+                      const raan = Math.round((index * 360) / customPlanes);
+                      
+                      return (
+                        <div key={index} className="space-y-1">
+                          <div className="flex justify-between items-center">
+                            <span 
+                              className="text-xs font-semibold"
+                              style={{ color: hslColor }}
+                            >
+                              RAAN {raan}°
+                            </span>
+                            <span className="text-xs text-white">{altitude} km</span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs text-gray-500">160km</span>
+                            <input
+                              type="range"
+                              min="160"
+                              max="2000"
+                              step="10"
+                              value={altitude}
+                              onChange={(e) => {
+                                const newAltitudes = [...customAltitudes];
+                                newAltitudes[index] = parseInt(e.target.value);
+                                setCustomAltitudes(newAltitudes);
+                              }}
+                              className="flex-1 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+                              style={{
+                                background: `linear-gradient(to right, ${hslColor} 0%, ${hslColor} ${((altitude - 160) / (2000 - 160)) * 100}%, #374151 ${((altitude - 160) / (2000 - 160)) * 100}%, #374151 100%)`
+                              }}
+                            />
+                            <span className="text-xs text-gray-500">2000km</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Button Grid 2x2 Layout */}
-        <div className="mt-2 grid grid-cols-2 gap-2">
-          {constellationInfo.type !== 'none' ? (
-            <>
+            {/* Button Grid 2x2 Layout */}
+            <div className="mt-2 grid grid-cols-2 gap-2">
               <button
                 onClick={applyCurrentConstellation}
                 className="px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded text-xs font-semibold"
@@ -810,7 +819,7 @@ const ConstellationDetailsPanel = () => {
               
               <button
                 onClick={generateDefaultConstellation}
-                className="px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded text-xs"
+                className="px-3 py-2 bg-gray-600 hover:bg-gray-500 text-gray-200 rounded text-xs border border-gray-500"
               >
                 Reset (550km)
               </button>
@@ -841,41 +850,9 @@ const ConstellationDetailsPanel = () => {
                   : 'Show Coverage'
                 }
               </button>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={generateDefaultConstellation}
-                className="px-3 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded text-xs font-semibold"
-              >
-                Generate Demo
-              </button>
-              
-              <button
-                onClick={generateCustomConstellation}
-                className="px-3 py-2 bg-green-500 hover:bg-green-600 text-white rounded text-xs font-semibold"
-              >
-                Generate Custom
-              </button>
-              
-              <button
-                onClick={clearConstellation}
-                disabled={true}
-                className="bg-gray-600 cursor-not-allowed px-3 py-2 text-white rounded text-xs"
-              >
-                Clear All
-              </button>
-              
-              <button
-                onClick={toggleCoverage}
-                disabled={true}
-                className="bg-gray-600 cursor-not-allowed px-3 py-2 text-white rounded text-xs"
-              >
-                Show Coverage
-              </button>
-            </>
-          )}
-        </div>
+            </div>
+          </>
+        )}
       </div>
       {isResizable && <div className="resize-handle" onMouseDown={handleMouseDownResize}></div>}
     </div>
