@@ -14,23 +14,23 @@ const SatelliteDetailsPanel: React.FC<SatelliteDetailsPanelProps> = ({ selectedS
   const { 
     position, 
     size, 
-    setPosition,
     handleMouseDownDrag, 
     handleMouseDownResize, 
     isResizable 
   } = useDraggableResizable({
-    initialPosition: { top: 630, left: 1000 - 420 },
+    initialPosition: { top: 70, left: 40 }, // Moved to left side
     initialSize: { width: 400, height: 200 },
     minWidth: 400,
     minHeight: 200,
   });
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setPosition(prevPos => ({ ...prevPos, left: window.innerWidth - (size.width + 40) }));
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // No dynamic positioning needed since it's now on the left side
+  // useEffect(() => {
+  //   if (typeof window !== 'undefined') {
+  //     setPosition(prevPos => ({ ...prevPos, left: window.innerWidth - (size.width + 40) }));
+  //   }
+  // // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, []);
 
   useEffect(() => {
     if (selectedSatellite?.position && viewer) {

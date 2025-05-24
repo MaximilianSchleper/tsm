@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import dynamic from 'next/dynamic';
-import TopBar from './TopBar';
-import TaskSchedulePanel from './TaskSchedulePanel';
+// import TopBar from './TopBar';
+// import TaskSchedulePanel from './TaskSchedulePanel';
 import ConstellationDetailsPanel from './ConstellationDetailsPanel';
 import SatelliteDetailsPanel from './SatelliteDetailsPanel';
 import type * as Cesium from 'cesium';
@@ -23,8 +23,9 @@ const Layout = () => {
       <div className="globe-viewer-background">
         <GlobeViewer setSelectedSatellite={setSelectedSatellite}> 
           {/* UI panels are now children of GlobeViewer to access Cesium context */}
-          <TopBar />
-          <TaskSchedulePanel />
+          {/* TopBar and TaskSchedulePanel hidden for hackathon demo */}
+          {/* <TopBar /> */}
+          {/* <TaskSchedulePanel /> */}
           <ConstellationDetailsPanel />
           <SatelliteDetailsPanel selectedSatellite={selectedSatellite} /> 
         </GlobeViewer>

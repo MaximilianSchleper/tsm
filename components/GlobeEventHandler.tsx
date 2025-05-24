@@ -42,8 +42,9 @@ const GlobeEventHandler: React.FC<GlobeEventHandlerProps> = ({ setSelectedSatell
               entityToSet = null;
             }
           }
-          // Check if this is a demo constellation satellite
-          else if (typeof pickedEntity.id === 'string' && pickedEntity.id.startsWith('demo-satellite-')) {
+          // Check if this is a satellite (demo or custom constellation)
+          else if (typeof pickedEntity.id === 'string' && 
+                   (pickedEntity.id.startsWith('demo-satellite-') || pickedEntity.id.startsWith('custom-satellite-'))) {
             entityToSet = pickedEntity;
           } else {
             // Not a satellite or coverage zone - clear selection
