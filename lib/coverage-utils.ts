@@ -42,7 +42,6 @@ export function generateEarthGrid(resolution: number = GRID_RESOLUTION_DEG): Ear
     }
   }
   
-  console.log(`Generated Earth grid with ${points.length} points at ${resolution}° resolution`);
   return points;
 }
 
@@ -164,9 +163,9 @@ export function isPointCovered(
   const isCovered = groundDistance <= maxCoverageRadius;
   
   // Debug: log first few checks
-  if (Math.random() < 0.001) { // 0.1% chance to avoid spam
-    console.log(`🔍 Point (${groundPoint.lat.toFixed(1)}, ${groundPoint.lng.toFixed(1)}) -> Satellite (${satPos.lat.toFixed(1)}, ${satPos.lng.toFixed(1)}): distance=${groundDistance.toFixed(1)}km, maxRadius=${maxCoverageRadius.toFixed(1)}km, covered=${isCovered}`);
-  }
+  // if (Math.random() < 0.001) { // 0.1% chance to avoid spam
+  //   console.log(`🔍 Point (${groundPoint.lat.toFixed(1)}, ${groundPoint.lng.toFixed(1)}) -> Satellite (${satPos.lat.toFixed(1)}, ${satPos.lng.toFixed(1)}): distance=${groundDistance.toFixed(1)}km, maxRadius=${maxCoverageRadius.toFixed(1)}km, covered=${isCovered}`);
+  // }
   
   return isCovered;
 }
@@ -185,7 +184,7 @@ export function calculateInstantaneousCoverage(
   gridResolution: number = GRID_RESOLUTION_DEG,
   minElevation: number = MIN_ELEVATION_DEG
 ): CoverageResult {
-  console.log(`🛰️ Calculating coverage for ${satellites.length} satellites at ${timestamp.toISOString()}`);
+  // console.log(`🛰️ Calculating coverage for ${satellites.length} satellites at ${timestamp.toISOString()}`);
   
   // Generate Earth grid
   const gridPoints = generateEarthGrid(gridResolution);
@@ -197,23 +196,23 @@ export function calculateInstantaneousCoverage(
     const pos = getSatellitePosition(sat, timestamp);
     if (pos) {
       satellitePositions.push(pos);
-      console.log(`📍 Satellite at lat=${pos.lat.toFixed(1)}°, lng=${pos.lng.toFixed(1)}°, alt=${pos.height.toFixed(0)}km`);
+      // console.log(`📍 Satellite at lat=${pos.lat.toFixed(1)}°, lng=${pos.lng.toFixed(1)}°, alt=${pos.height.toFixed(0)}km`);
     }
   }
   
-  console.log(`📍 Got positions for ${satellitePositions.length} satellites`);
+  // console.log(`📍 Got positions for ${satellitePositions.length} satellites`);
   
   // Calculate coverage radius for debugging
-  if (satellitePositions.length > 0) {
-    const sampleRadius = calculateCoverageRadius(satellitePositions[0]!.height, minElevation);
-    console.log(`📏 Coverage radius at ${satellitePositions[0]!.height.toFixed(0)}km altitude: ${sampleRadius.toFixed(1)}km`);
+  // if (satellitePositions.length > 0) {
+  //   const sampleRadius = calculateCoverageRadius(satellitePositions[0]!.height, minElevation);
+  //   console.log(`📏 Coverage radius at ${satellitePositions[0]!.height.toFixed(0)}km altitude: ${sampleRadius.toFixed(1)}km`);
     
-    // Calculate theoretical max coverage
-    const earthSurfaceArea = 4 * Math.PI * EARTH_RADIUS_KM * EARTH_RADIUS_KM;
-    const singleSatCoverageArea = Math.PI * sampleRadius * sampleRadius;
-    const theoreticalMaxCoverage = (singleSatCoverageArea * satellites.length / earthSurfaceArea) * 100;
-    console.log(`🧮 Theoretical max coverage (no overlap): ${theoreticalMaxCoverage.toFixed(1)}%`);
-  }
+  //   // Calculate theoretical max coverage
+  //   const earthSurfaceArea = 4 * Math.PI * EARTH_RADIUS_KM * EARTH_RADIUS_KM;
+  //   const singleSatCoverageArea = Math.PI * sampleRadius * sampleRadius;
+  //   const theoreticalMaxCoverage = (singleSatCoverageArea * satellites.length / earthSurfaceArea) * 100;
+  //   console.log(`🧮 Theoretical max coverage (no overlap): ${theoreticalMaxCoverage.toFixed(1)}%`);
+  // }
   
   // Check coverage for each grid point
   gridPoints.forEach(point => {
@@ -235,8 +234,8 @@ export function calculateInstantaneousCoverage(
     calculatedAt: timestamp
   };
   
-  console.log(`📊 Coverage result: ${result.globalPercentage}% (${coveredPoints}/${gridPoints.length} points)`);
-  console.log(`🎯 Grid resolution: ${gridResolution}° (${Math.sqrt(gridPoints.length).toFixed(0)}x${Math.sqrt(gridPoints.length).toFixed(0)} points)`);
+  // console.log(`📊 Coverage result: ${result.globalPercentage}% (${coveredPoints}/${gridPoints.length} points)`);
+  // console.log(`🎯 Grid resolution: ${gridResolution}° (${Math.sqrt(gridPoints.length).toFixed(0)}x${Math.sqrt(gridPoints.length).toFixed(0)} points)`);
   
   return result;
 }

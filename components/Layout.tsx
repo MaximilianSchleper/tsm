@@ -26,7 +26,7 @@ const Layout = () => {
           {/* TopBar and TaskSchedulePanel hidden for hackathon demo */}
           {/* <TopBar /> */}
           {/* <TaskSchedulePanel /> */}
-          <ConstellationDetailsPanel />
+          <ConstellationDetailsPanel setSelectedSatellite={setSelectedSatellite} />
           <SatelliteDetailsPanel selectedSatellite={selectedSatellite} /> 
         </GlobeViewer>
       </div>

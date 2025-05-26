@@ -174,7 +174,7 @@ export function addConstellationCoverageZones(
     }
   });
   
-  console.log(`Added ${createdEntityIds.length} coverage zones for constellation`);
+  // console.log(`Added ${createdEntityIds.length} coverage zones for constellation`);
   return createdEntityIds;
 }
 

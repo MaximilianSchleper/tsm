@@ -7,6 +7,10 @@ import { generateDemoConstellationElements, generateOptimalConstellationElements
 import { calculateInstantaneousCoverage } from '../lib/coverage-utils';
 import { addConstellationCoverageZones, removeAllCoverageZones } from '../lib/coverage-visualization';
 
+interface ConstellationDetailsPanelProps {
+  setSelectedSatellite: (satellite: Cesium.Entity | null) => void;
+}
+
 interface ConstellationInfo {
   type: 'none' | 'demo' | 'custom';
   satelliteCount: number;
@@ -27,8 +31,48 @@ interface ConstellationInfo {
   satelliteIds?: string[]; // Store satellite IDs for coverage visualization
 }
 
-const ConstellationDetailsPanel = () => {
+// Define orbital elements type for better type safety
+interface OrbitalElements {
+  altitude: number;
+  inclination: number;
+  raan: number;
+  trueAnomaly: number;
+  epoch: Date;
+  satelliteNumber: number;
+}
+
+// Unified color generation function - used consistently across UI and constellation rendering
+const generatePlaneColors = (numPlanes: number): { cesiumColors: Cesium.Color[], cssColors: string[] } => {
+  const cesiumColors: Cesium.Color[] = [];
+  const cssColors: string[] = [];
+  
+  for (let i = 0; i < numPlanes; i++) {
+    const hue = (i * 360) / numPlanes; // Evenly distribute hues
+    const saturation = 0.8; // 80%
+    const lightness = 0.6;  // 60%
+    
+    // Cesium color for satellite rendering
+    cesiumColors.push(Cesium.Color.fromHsl(hue / 360, saturation, lightness));
+    
+    // CSS color for UI elements
+    cssColors.push(`hsl(${hue}, ${saturation * 100}%, ${lightness * 100}%)`);
+  }
+  
+  return { cesiumColors, cssColors };
+};
+
+const ConstellationDetailsPanel: React.FC<ConstellationDetailsPanelProps> = ({ setSelectedSatellite }) => {
   const { viewer } = useCesium();
+
+  // Constants
+  const DEMO_PLANES = 4;
+  const DEMO_SATS_PER_PLANE = 2;
+  const DEFAULT_ALTITUDE = 550;
+  const SIMULATION_DAYS = 3;
+  const INCLINATION = 65;
+  const CLOCK_MULTIPLIER = 300; // 5-minute real-time = 1 day simulation
+  const SELECTION_RESTORE_DELAY = 100; // ms
+
   const [constellationInfo, setConstellationInfo] = useState<ConstellationInfo>({
     type: 'none',
     satelliteCount: 0,
@@ -89,15 +133,6 @@ const ConstellationDetailsPanel = () => {
     };
   }, [viewer]);
 
-  // Live coverage zone updates
-  useEffect(() => {
-    // Hide coverage zones automatically when animation starts
-    if (isAnimationPlaying && showCoverageZones && viewer) {
-      removeAllCoverageZones(viewer);
-      setShowCoverageZones(false);
-    }
-  }, [isAnimationPlaying, showCoverageZones, viewer]);
-
   // Poll for new API constellation parameters
   useEffect(() => {
     const pollForApiUpdates = async () => {
@@ -139,36 +174,52 @@ const ConstellationDetailsPanel = () => {
     return () => clearInterval(interval);
   }, [lastApiTimestamp]);
 
-  
-
-  const generateDemoConstellation = () => {
+  // Shared constellation generation logic
+  const generateConstellationBase = React.useCallback((
+    elements: OrbitalElements[],
+    colors: Cesium.Color[],
+    satelliteNaming: (index: number, planeIndex: number, satInPlane: number) => { name: string; id: string },
+    preserveCurrentTime = false,
+    constellationType: 'demo' | 'custom',
+    configOverrides: Partial<ConstellationInfo['config']> = {}
+  ) => {
     if (!viewer) {
       console.error("Cesium viewer is not available");
       return;
     }
 
     try {
-      // Clear all existing satellites
+      // Preserve current simulation time if requested (for Apply Changes)
+      const currentSimulationTime = preserveCurrentTime && viewer.clock.currentTime 
+        ? Cesium.JulianDate.toDate(viewer.clock.currentTime)
+        : null;
+
+      // Clear all existing satellites and reset coverage state
       viewer.entities.removeAll();
-
-      // Generate base orbital elements for 8 satellites, but we'll modify altitudes per plane
-      const baseElements = generateDemoConstellationElements();
-
-      // Color scheme: Different colors for each orbital plane
-      const colors = [
-        Cesium.Color.CYAN,      // Plane 1 (RAAN 0°)
-        Cesium.Color.ORANGE,    // Plane 2 (RAAN 90°)
-        Cesium.Color.LIME,      // Plane 3 (RAAN 180°)
-        Cesium.Color.MAGENTA,   // Plane 4 (RAAN 270°)
-      ];
+      setShowCoverageZones(false);
 
       // Time setup with dynamic resolution based on satellite count
-      const startTime = new Date(); // Current time
-      const durationDays = 3; // 3 days for better performance with large constellations
-      const endTime = new Date(startTime.getTime() + durationDays * 24 * 60 * 60 * 1000);
+      const startTime = currentSimulationTime ?? new Date();
+      const durationDays = SIMULATION_DAYS; // 3 days for better performance with large constellations
+      
+      // When preserving time, center the time range around the current time
+      // Otherwise, start from the current time
+      let pathStartTime: Date;
+      let pathEndTime: Date;
+      
+      if (currentSimulationTime) {
+        // Center 3-day window around current simulation time
+        const halfDuration = (durationDays * 24 * 60 * 60 * 1000) / 2;
+        pathStartTime = new Date(currentSimulationTime.getTime() - halfDuration);
+        pathEndTime = new Date(currentSimulationTime.getTime() + halfDuration);
+      } else {
+        // Start from current time for new constellations
+        pathStartTime = startTime;
+        pathEndTime = new Date(startTime.getTime() + durationDays * 24 * 60 * 60 * 1000);
+      }
       
       // Dynamic time resolution based on satellite count for optimal UX
-      const satelliteCount = baseElements.length;
+      const satelliteCount = elements.length;
       const timeStepSeconds = satelliteCount <= 8 ? 60 :    // 1-8 sats: 1-min (smooth orbits)
                              satelliteCount <= 16 ? 120 :   // 9-16 sats: 2-min (good detail)
                              satelliteCount <= 32 ? 240 :   // 17-32 sats: 4-min (balanced)
@@ -178,199 +229,18 @@ const ConstellationDetailsPanel = () => {
       const satelliteRecords: satellite.SatRec[] = [];
       const satelliteIds: string[] = [];
 
-      // Generate and add each satellite
-      baseElements.forEach((satelliteElements, index) => {
-        const planeIndex = Math.floor(index / 2); // 2 satellites per plane
-        const satelliteInPlane = index % 2; // 0-1 within each plane
-        const color = colors[planeIndex];
-        if (!color) {
-          console.error(`ERROR: No color defined for plane ${planeIndex}`);
-          return;
-        }
-        const satName = `Demo-${planeIndex + 1}${satelliteInPlane === 0 ? 'A' : 'B'}`; // Demo-1A, Demo-1B, Demo-2A, Demo-2B, etc.
-        const satelliteId = `demo-satellite-${satelliteElements.satelliteNumber}`;
-
-        // Use default altitude for demo constellation
-        const customAltitude = 550;
-        const customElements = {
-          ...satelliteElements,
-          altitude: customAltitude
-        };
-
-        // Generate TLE for this satellite with custom altitude
-        const tle = generateTLE(customElements);
-
-        // Parse TLE with satellite.js
-        const satrec = satellite.twoline2satrec(tle.line1, tle.line2);
-        if (satrec.error !== satellite.SatRecError.None) {
-          console.error(`ERROR: TLE parsing failed for ${satName}:`, satrec.error);
-          return; // Skip this satellite
-        }
-
-        // Create position property by propagating the orbit
-        const positionProperty = new Cesium.SampledPositionProperty();
-
-        for (let currentTime = new Date(startTime.getTime()); currentTime <= endTime; currentTime.setTime(currentTime.getTime() + timeStepSeconds * 1000)) {
-          const jsDate = new Date(currentTime);
-          const positionAndVelocity = satellite.propagate(satrec, jsDate);
-
-          if (!positionAndVelocity || typeof positionAndVelocity.position === 'boolean' || !positionAndVelocity.position) {
-            continue;
-          }
-
-          const positionEciKm = positionAndVelocity.position;
-          const positionEciMeters = new Cesium.Cartesian3(
-            positionEciKm.x * 1000,
-            positionEciKm.y * 1000,
-            positionEciKm.z * 1000
-          );
-
-          const cesiumJulianDate = Cesium.JulianDate.fromDate(jsDate);
-          const transform = Cesium.Transforms.computeIcrfToFixedMatrix(cesiumJulianDate);
-
-          if (!transform) {
-            continue;
-          }
-
-          const positionEcef = Cesium.Matrix3.multiplyByVector(
-            transform,
-            positionEciMeters,
-            new Cesium.Cartesian3()
-          );
-
-          positionProperty.addSample(cesiumJulianDate, positionEcef);
-        }
-
-        // Add satellite entity to Cesium
-        viewer.entities.add({
-          id: satelliteId,
-          name: satName,
-          availability: new Cesium.TimeIntervalCollection([new Cesium.TimeInterval({
-            start: Cesium.JulianDate.fromDate(startTime),
-            stop: Cesium.JulianDate.fromDate(endTime),
-          })]),
-          position: positionProperty,
-          billboard: {
-            image: '/satellite-dish.png',
-            width: 30,
-            height: 30,
-            color: color,
-          },
-          path: {
-            show: true,
-            material: new Cesium.PolylineDashMaterialProperty({
-              color: color.withAlpha(0.6),
-              dashLength: 8.0,
-            }),
-            width: 2,
-            leadTime: 3600 * 0.5, // 30 minutes ahead for better performance
-            trailTime: 3600 * 0.5, // 30 minutes behind for better performance  
-            resolution: satelliteCount <= 8 ? 15 :    // 1-8 sats: Very smooth orbits
-                       satelliteCount <= 16 ? 30 :   // 9-16 sats: Smooth orbits
-                       satelliteCount <= 32 ? 45 :   // 17-32 sats: Good orbits
-                       60,                           // 33+ sats: Performance orbits
-          },
-        });
-
-        // Store satellite record for coverage calculation
-        satelliteRecords.push(satrec);
-        satelliteIds.push(satelliteId);
-      });
-
-      // Update viewer clock for full week simulation
-      viewer.clock.startTime = Cesium.JulianDate.fromDate(startTime);
-      viewer.clock.stopTime = Cesium.JulianDate.fromDate(endTime);
-      viewer.clock.currentTime = Cesium.JulianDate.fromDate(startTime);
-      viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP;
-      viewer.clock.multiplier = 300; // 5-minute real-time = 1 day simulation
-
-      // Update constellation info
-      setConstellationInfo({
-        type: 'demo',
-        satelliteCount: baseElements.length,
-        generatedAt: new Date(),
-        config: {
-          planes: 4,
-          satellitesPerPlane: 2,
-          altitude: 550,
-          altitudesByPlane: [550, 550, 550, 550],
-          inclination: 65,
-          simulationDays: 3
-        },
-        satelliteRecords: satelliteRecords,
-        satelliteIds: satelliteIds
-      });
-
-    } catch (error) {
-      console.error("ERROR during demo constellation generation:", error);
-    }
-  };
-
-  const generateDefaultConstellation = () => {
-    // Reset to demo constellation defaults
-    setCustomSatellites(8);
-    setCustomPlanes(4);
-    setCustomAltitudes([550, 550, 550, 550]);
-    generateDemoConstellation();
-  };
-
-  const generateCustomConstellation = React.useCallback(() => {
-    if (!viewer) {
-      console.error("Cesium viewer is not available");
-      return;
-    }
-
-    try {
-      // Validation
-      if (customAltitudes.length !== customPlanes) {
-        alert(`Number of altitudes (${customAltitudes.length}) must equal number of planes (${customPlanes})`);
-        return;
-      }
-
-      // Clear all existing satellites
-      viewer.entities.removeAll();
-
-      // Generate optimal constellation elements
-      const elements = generateOptimalConstellationElements(
-        customSatellites,
-        customPlanes,
-        customAltitudes
-      );
-
-      // Dynamic color generation for any number of planes
-      const generateColors = (numPlanes: number): Cesium.Color[] => {
-        const colors: Cesium.Color[] = [];
-        for (let i = 0; i < numPlanes; i++) {
-          const hue = (i * 360) / numPlanes; // Evenly distribute hues
-          colors.push(Cesium.Color.fromHsl(hue / 360, 0.8, 0.6));
-        }
-        return colors;
-      };
-
-      const colors = generateColors(customPlanes);
-
-      // Time setup with dynamic resolution based on satellite count
-      const startTime = new Date();
-      const durationDays = 3; // 3 days for better performance with large constellations
-      const endTime = new Date(startTime.getTime() + durationDays * 24 * 60 * 60 * 1000);
-      
-      // Dynamic time resolution based on satellite count for optimal UX
-      const timeStepSeconds = customSatellites <= 8 ? 60 :    // 1-8 sats: 1-min (smooth orbits)
-                             customSatellites <= 16 ? 120 :   // 9-16 sats: 2-min (good detail)
-                             customSatellites <= 32 ? 240 :   // 17-32 sats: 4-min (balanced)
-                             300;                              // 33+ sats: 5-min (performance)
-
-      // Store satellite records for coverage calculation
-      const satelliteRecords: satellite.SatRec[] = [];
-      const satelliteIds: string[] = [];
-
-      // Calculate satellites per plane for naming
+      // Calculate satellites per plane for demo/custom logic
+      const numPlanes = constellationType === 'demo' ? DEMO_PLANES : customPlanes;
       const satellitesPerPlane: number[] = [];
-      const baseSatsPerPlane = Math.floor(customSatellites / customPlanes);
-      const extraSats = customSatellites % customPlanes;
       
-      for (let i = 0; i < customPlanes; i++) {
-        satellitesPerPlane.push(baseSatsPerPlane + (i < extraSats ? 1 : 0));
+      if (constellationType === 'demo') {
+        satellitesPerPlane.push(DEMO_SATS_PER_PLANE, DEMO_SATS_PER_PLANE, DEMO_SATS_PER_PLANE, DEMO_SATS_PER_PLANE); // Fixed 2 per plane for demo
+      } else {
+        const baseSatsPerPlane = Math.floor(elements.length / numPlanes);
+        const extraSats = elements.length % numPlanes;
+        for (let i = 0; i < numPlanes; i++) {
+          satellitesPerPlane.push(baseSatsPerPlane + (i < extraSats ? 1 : 0));
+        }
       }
 
       // Generate and add each satellite
@@ -379,19 +249,24 @@ const ConstellationDetailsPanel = () => {
       
       elements.forEach((satelliteElements, index) => {
         // Determine which plane this satellite belongs to
-        while (satInPlane >= (satellitesPerPlane[currentPlane] ?? 0)) {
-          currentPlane++;
-          satInPlane = 0;
+        if (constellationType === 'custom') {
+          while (satInPlane >= (satellitesPerPlane[currentPlane] ?? 0)) {
+            currentPlane++;
+            satInPlane = 0;
+          }
+        } else {
+          // Demo: simple 2 per plane logic
+          currentPlane = Math.floor(index / 2);
+          satInPlane = index % 2;
         }
         
-                  const color = colors[currentPlane];
-          if (!color) {
-            console.error(`ERROR: No color defined for plane ${currentPlane}`);
-            return;
-          }
+        const color = colors[currentPlane];
+        if (!color) {
+          console.error(`ERROR: No color defined for plane ${currentPlane}`);
+          return;
+        }
         
-        const satName = `Custom-${currentPlane + 1}${String.fromCharCode(65 + satInPlane)}`; // Custom-1A, Custom-1B, etc.
-        const satelliteId = `custom-satellite-${satelliteElements.satelliteNumber}`;
+        const { name: satName, id: satelliteId } = satelliteNaming(index, currentPlane, satInPlane);
 
         // Generate TLE for this satellite
         const tle = generateTLE(satelliteElements);
@@ -406,7 +281,7 @@ const ConstellationDetailsPanel = () => {
         // Create position property by propagating the orbit
         const positionProperty = new Cesium.SampledPositionProperty();
 
-        for (let currentTime = new Date(startTime.getTime()); currentTime <= endTime; currentTime.setTime(currentTime.getTime() + timeStepSeconds * 1000)) {
+        for (let currentTime = new Date(pathStartTime.getTime()); currentTime <= pathEndTime; currentTime.setTime(currentTime.getTime() + timeStepSeconds * 1000)) {
           const jsDate = new Date(currentTime);
           const positionAndVelocity = satellite.propagate(satrec, jsDate);
 
@@ -442,8 +317,8 @@ const ConstellationDetailsPanel = () => {
           id: satelliteId,
           name: satName,
           availability: new Cesium.TimeIntervalCollection([new Cesium.TimeInterval({
-            start: Cesium.JulianDate.fromDate(startTime),
-            stop: Cesium.JulianDate.fromDate(endTime),
+            start: Cesium.JulianDate.fromDate(pathStartTime),
+            stop: Cesium.JulianDate.fromDate(pathEndTime),
           })]),
           position: positionProperty,
           billboard: {
@@ -461,10 +336,10 @@ const ConstellationDetailsPanel = () => {
             width: 2,
             leadTime: 3600 * 0.5, // 30 minutes ahead for better performance
             trailTime: 3600 * 0.5, // 30 minutes behind for better performance
-            resolution: customSatellites <= 8 ? 15 :    // 1-8 sats: Very smooth orbits
-                       customSatellites <= 16 ? 30 :   // 9-16 sats: Smooth orbits
-                       customSatellites <= 32 ? 45 :   // 17-32 sats: Good orbits
-                       60,                             // 33+ sats: Performance orbits
+            resolution: satelliteCount <= 8 ? 15 :    // 1-8 sats: Very smooth orbits
+                       satelliteCount <= 16 ? 30 :   // 9-16 sats: Smooth orbits
+                       satelliteCount <= 32 ? 45 :   // 17-32 sats: Good orbits
+                       60,                           // 33+ sats: Performance orbits
           },
         });
 
@@ -472,31 +347,136 @@ const ConstellationDetailsPanel = () => {
         satelliteRecords.push(satrec);
         satelliteIds.push(satelliteId);
         
-        satInPlane++;
+        if (constellationType === 'custom') {
+          satInPlane++;
+        }
       });
 
-      // Update viewer clock
+      // Update viewer clock - preserve current time if requested
       viewer.clock.startTime = Cesium.JulianDate.fromDate(startTime);
-      viewer.clock.stopTime = Cesium.JulianDate.fromDate(endTime);
-      viewer.clock.currentTime = Cesium.JulianDate.fromDate(startTime);
+      viewer.clock.stopTime = Cesium.JulianDate.fromDate(pathEndTime);
+      if (currentSimulationTime) {
+        // Keep the current simulation time when applying changes
+        viewer.clock.currentTime = Cesium.JulianDate.fromDate(currentSimulationTime);
+      } else {
+        // Start from beginning for new constellations
+        viewer.clock.currentTime = Cesium.JulianDate.fromDate(startTime);
+      }
       viewer.clock.clockRange = Cesium.ClockRange.LOOP_STOP;
-      viewer.clock.multiplier = 300;
+      viewer.clock.multiplier = CLOCK_MULTIPLIER;
 
-      // Update constellation info
+      // Update constellation info with provided config overrides
+      const baseConfig = {
+        inclination: INCLINATION,
+        simulationDays: SIMULATION_DAYS
+      };
+
       setConstellationInfo({
-        type: 'custom',
+        type: constellationType,
         satelliteCount: elements.length,
         generatedAt: new Date(),
-        config: {
-          planes: customPlanes,
-          satellitesPerPlane: Math.round(customSatellites / customPlanes),
-          altitudesByPlane: customAltitudes,
-          inclination: 65,
-          simulationDays: 3
-        },
+        config: { ...baseConfig, ...configOverrides },
         satelliteRecords: satelliteRecords,
         satelliteIds: satelliteIds
       });
+
+    } catch (error) {
+      console.error("ERROR during constellation generation:", error);
+      if (error instanceof Error) {
+        alert(`Error: ${error.message}`);
+      }
+    }
+  }, [viewer, customPlanes, setShowCoverageZones, setConstellationInfo]);
+
+  const generateDemoConstellation = (preserveCurrentTime = false, useCustomAltitudes = false) => {
+    try {
+      // Generate base orbital elements for 8 satellites
+      const baseElements = generateDemoConstellationElements();
+
+      // Modify altitudes if requested
+      if (useCustomAltitudes) {
+        baseElements.forEach((elements, index) => {
+          const planeIndex = Math.floor(index / DEMO_SATS_PER_PLANE); // 2 satellites per plane
+          const customAltitude = customAltitudes[planeIndex] ?? DEFAULT_ALTITUDE;
+          elements.altitude = customAltitude;
+        });
+      }
+
+      // Use unified color generation for 4 planes (demo constellation)
+      const { cesiumColors } = generatePlaneColors(DEMO_PLANES);
+
+      // Use actual altitudes for config
+      const actualAltitudes = useCustomAltitudes 
+        ? [customAltitudes[0] ?? DEFAULT_ALTITUDE, customAltitudes[1] ?? DEFAULT_ALTITUDE, customAltitudes[2] ?? DEFAULT_ALTITUDE, customAltitudes[3] ?? DEFAULT_ALTITUDE]
+        : [DEFAULT_ALTITUDE, DEFAULT_ALTITUDE, DEFAULT_ALTITUDE, DEFAULT_ALTITUDE];
+
+      generateConstellationBase(
+        baseElements, 
+        cesiumColors, 
+        (index, planeIndex, satInPlane) => ({
+          name: `Demo-${planeIndex + 1}${satInPlane === 0 ? 'A' : 'B'}`,
+          id: `demo-satellite-${baseElements[index]?.satelliteNumber ?? index}`,
+        }), 
+        preserveCurrentTime, 
+        'demo', 
+        {
+          planes: DEMO_PLANES,
+          satellitesPerPlane: DEMO_SATS_PER_PLANE,
+          altitude: DEFAULT_ALTITUDE,
+          altitudesByPlane: actualAltitudes,
+          inclination: INCLINATION,
+          simulationDays: SIMULATION_DAYS
+        }
+      );
+
+    } catch (error) {
+      console.error("ERROR during demo constellation generation:", error);
+    }
+  };
+
+  const generateDefaultConstellation = () => {
+    // Reset to demo constellation defaults
+    setCustomSatellites(8);
+    setCustomPlanes(DEMO_PLANES);
+    setCustomAltitudes([DEFAULT_ALTITUDE, DEFAULT_ALTITUDE, DEFAULT_ALTITUDE, DEFAULT_ALTITUDE]);
+    generateDemoConstellation(false, false); // Don't preserve time, don't use custom altitudes
+  };
+
+  const generateCustomConstellation = React.useCallback((preserveCurrentTime = false) => {
+    try {
+      // Validation
+      if (customAltitudes.length !== customPlanes) {
+        alert(`Number of altitudes (${customAltitudes.length}) must equal number of planes (${customPlanes})`);
+        return;
+      }
+
+      // Generate optimal constellation elements
+      const elements = generateOptimalConstellationElements(
+        customSatellites,
+        customPlanes,
+        customAltitudes
+      );
+
+      // Use the global unified color generation function
+      const { cesiumColors: colors } = generatePlaneColors(customPlanes);
+
+      generateConstellationBase(
+        elements, 
+        colors, 
+        (index, planeIndex, satInPlane) => ({
+          name: `Custom-${planeIndex + 1}${String.fromCharCode(65 + satInPlane)}`,
+          id: `custom-satellite-${elements[index]?.satelliteNumber ?? index}`,
+        }), 
+        preserveCurrentTime, 
+        'custom', 
+        {
+          planes: customPlanes,
+          satellitesPerPlane: Math.round(customSatellites / customPlanes),
+          altitudesByPlane: customAltitudes,
+          inclination: INCLINATION,
+          simulationDays: SIMULATION_DAYS
+        }
+      );
 
     } catch (error) {
       console.error("ERROR during custom constellation generation:", error);
@@ -504,7 +484,7 @@ const ConstellationDetailsPanel = () => {
         alert(`Error: ${error.message}`);
       }
     }
-  }, [viewer, customSatellites, customPlanes, customAltitudes]);
+  }, [customSatellites, customPlanes, customAltitudes, generateConstellationBase]);
 
   // Auto-trigger constellation generation when API flag is set
   useEffect(() => {
@@ -520,6 +500,9 @@ const ConstellationDetailsPanel = () => {
     viewer.entities.removeAll();
     setShowCoverageZones(false);
     
+    // Clear selected satellite
+    setSelectedSatellite(null);
+    
     // Reset constellation parameters
     setCustomSatellites(12);
     setCustomPlanes(3);
@@ -534,109 +517,145 @@ const ConstellationDetailsPanel = () => {
     });
   };
 
-  const toggleCoverage = () => {
+  // Helper function to create coverage zones - extracts duplicated logic
+  const createCoverageZones = React.useCallback(() => {
     if (!viewer || !constellationInfo.satelliteRecords || !constellationInfo.satelliteIds) {
       return;
     }
 
-    if (showCoverageZones) {
-      // Hide coverage zones
+    const currentTime = Cesium.JulianDate.toDate(viewer.clock.currentTime);
+    
+    // Generate colors and satellite-to-plane mapping based on constellation type
+    let colors: Cesium.Color[] = [];
+    let satellitesPerPlane: number[] = [];
+    
+    if (constellationInfo.type === 'demo') {
+      // Demo constellation: 4 planes, 2 satellites per plane - use unified colors
+      const { cesiumColors } = generatePlaneColors(DEMO_PLANES);
+      colors = cesiumColors;
+      satellitesPerPlane = [DEMO_SATS_PER_PLANE, DEMO_SATS_PER_PLANE, DEMO_SATS_PER_PLANE, DEMO_SATS_PER_PLANE];
+    } else {
+      // Custom constellation: use current parameters - use unified colors
+      const numPlanes = customPlanes;
+      const numSatellites = customSatellites;
+      
+      const { cesiumColors } = generatePlaneColors(numPlanes);
+      colors = cesiumColors;
+      
+      // Calculate satellites per plane (same logic as generateCustomConstellation)
+      const baseSatsPerPlane = Math.floor(numSatellites / numPlanes);
+      const extraSats = numSatellites % numPlanes;
+      
+      satellitesPerPlane = [];
+      for (let i = 0; i < numPlanes; i++) {
+        satellitesPerPlane.push(baseSatsPerPlane + (i < extraSats ? 1 : 0));
+      }
+    }
+
+    // Map satellites to planes using the same logic as constellation generation
+    const satelliteData = constellationInfo.satelliteRecords
+      .map((satrec, index) => {
+        const id = constellationInfo.satelliteIds![index];
+        if (!id) return null;
+        
+        // Determine which plane this satellite belongs to
+        let currentPlane = 0;
+        let satellitesSoFar = 0;
+        
+        for (let plane = 0; plane < satellitesPerPlane.length; plane++) {
+          const satsInThisPlane = satellitesPerPlane[plane] ?? 0;
+          if (index < satellitesSoFar + satsInThisPlane) {
+            currentPlane = plane;
+            break;
+          }
+          satellitesSoFar += satsInThisPlane;
+        }
+        
+        const color = colors[currentPlane];
+        if (!color) return null;
+        
+        return { id, satrec, color };
+      })
+      .filter((item): item is { id: string; satrec: satellite.SatRec; color: Cesium.Color } => item !== null);
+
+    // Create color array in the right order for the satellites
+    const orderedColors = satelliteData.map(sat => sat.color);
+
+    // Create zones at current simulation time
+    addConstellationCoverageZones(viewer, satelliteData, orderedColors, currentTime);
+    
+    // Calculate coverage percentage
+    const coverageResult = calculateInstantaneousCoverage(constellationInfo.satelliteRecords, currentTime);
+    
+    // Update constellation info with coverage
+    setConstellationInfo(prev => ({
+      ...prev,
+      coverage: {
+        globalPercentage: coverageResult.globalPercentage,
+        calculatedAt: coverageResult.calculatedAt
+      }
+    }));
+    
+    setShowCoverageZones(true);
+  }, [viewer, constellationInfo, customPlanes, customSatellites]);
+
+  const toggleAnimationAndCoverage = () => {
+    if (!viewer || !constellationInfo.satelliteRecords || !constellationInfo.satelliteIds) {
+      return;
+    }
+
+    if (isAnimationPlaying) {
+      // Currently playing -> pause animation and show coverage
+      viewer.clock.shouldAnimate = false;
+      
+      // Show coverage zones at current simulation time
+      createCoverageZones();
+    } else if (showCoverageZones) {
+      // Currently paused with coverage shown -> resume animation and hide coverage
+      viewer.clock.shouldAnimate = true;
       removeAllCoverageZones(viewer);
       setShowCoverageZones(false);
     } else {
-      // Show coverage zones at current simulation time (only when paused)
-      const currentTime = Cesium.JulianDate.toDate(viewer.clock.currentTime);
-      
-      // Generate colors and satellite-to-plane mapping based on constellation type
-      let colors: Cesium.Color[] = [];
-      let satellitesPerPlane: number[] = [];
-      
-      if (constellationInfo.type === 'demo') {
-        // Demo constellation: 4 planes, 2 satellites per plane
-        colors = [
-          Cesium.Color.CYAN,
-          Cesium.Color.ORANGE,
-          Cesium.Color.LIME,
-          Cesium.Color.MAGENTA
-        ];
-        satellitesPerPlane = [2, 2, 2, 2];
-      } else {
-        // Custom constellation: use current parameters
-        const numPlanes = customPlanes;
-        const numSatellites = customSatellites;
-        
-        // Generate dynamic colors (same logic as generateCustomConstellation)
-        colors = [];
-        for (let i = 0; i < numPlanes; i++) {
-          const hue = (i * 360) / numPlanes;
-          colors.push(Cesium.Color.fromHsl(hue / 360, 0.8, 0.6));
-        }
-        
-        // Calculate satellites per plane (same logic as generateCustomConstellation)
-        const baseSatsPerPlane = Math.floor(numSatellites / numPlanes);
-        const extraSats = numSatellites % numPlanes;
-        
-        satellitesPerPlane = [];
-        for (let i = 0; i < numPlanes; i++) {
-          satellitesPerPlane.push(baseSatsPerPlane + (i < extraSats ? 1 : 0));
-        }
-      }
-
-      // Map satellites to planes using the same logic as constellation generation
-      const satelliteData = constellationInfo.satelliteRecords
-        .map((satrec, index) => {
-          const id = constellationInfo.satelliteIds![index];
-          if (!id) return null;
-          
-          // Determine which plane this satellite belongs to
-          let currentPlane = 0;
-          let satellitesSoFar = 0;
-          
-          for (let plane = 0; plane < satellitesPerPlane.length; plane++) {
-            const satsInThisPlane = satellitesPerPlane[plane] ?? 0;
-            if (index < satellitesSoFar + satsInThisPlane) {
-              currentPlane = plane;
-              break;
-            }
-            satellitesSoFar += satsInThisPlane;
-          }
-          
-          const color = colors[currentPlane];
-          if (!color) return null;
-          
-          return { id, satrec, color };
-        })
-        .filter((item): item is { id: string; satrec: satellite.SatRec; color: Cesium.Color } => item !== null);
-
-      // Create color array in the right order for the satellites
-      const orderedColors = satelliteData.map(sat => sat.color);
-
-      // Create zones at current simulation time
-      addConstellationCoverageZones(viewer, satelliteData, orderedColors, currentTime);
-      
-      // Calculate coverage percentage
-      const coverageResult = calculateInstantaneousCoverage(constellationInfo.satelliteRecords, currentTime);
-      
-      // Update constellation info with coverage
-      setConstellationInfo(prev => ({
-        ...prev,
-        coverage: {
-          globalPercentage: coverageResult.globalPercentage,
-          calculatedAt: coverageResult.calculatedAt
-        }
-      }));
-      
-      setShowCoverageZones(true);
+      // Currently paused without coverage -> show coverage (keep paused)
+      createCoverageZones();
     }
   };
 
   const applyCurrentConstellation = () => {
-    // Regenerate constellation with current parameters
-    if (constellationInfo.type === 'demo') {
-      generateDemoConstellation();
-    } else {
-      generateCustomConstellation();
+    if (!viewer) return;
+    
+    // Store the currently selected satellite info before regeneration
+    const currentlySelectedSatellite = viewer.selectedEntity;
+    let selectedSatelliteId: string | null = null;
+    let selectedSatelliteName: string | null = null;
+    
+    if (currentlySelectedSatellite && typeof currentlySelectedSatellite.id === 'string') {
+      selectedSatelliteId = currentlySelectedSatellite.id;
+      selectedSatelliteName = currentlySelectedSatellite.name ?? null;
+      console.log('📌 Saving selected satellite:', selectedSatelliteId, selectedSatelliteName);
     }
+
+    // Always use custom constellation when applying changes since user is setting custom parameters
+    // This ensures that satellite count and plane count changes are respected
+    generateCustomConstellation(true);
+
+    // After constellation regeneration, attempt to restore selection
+    // Use a small delay to ensure entities are fully created
+    setTimeout(() => {
+      if (selectedSatelliteId && viewer) {
+        const newEntity = viewer.entities.getById(selectedSatelliteId);
+        if (newEntity) {
+          console.log('✅ Restored selection to:', selectedSatelliteId);
+          viewer.selectedEntity = newEntity;
+          setSelectedSatellite(newEntity);
+        } else {
+          console.log('❌ Could not find satellite with ID:', selectedSatelliteId);
+          // Clear selection if the satellite can't be found
+          viewer.selectedEntity = undefined;
+          setSelectedSatellite(null);
+        }
+      }
+    }, SELECTION_RESTORE_DELAY); // 100ms delay to ensure entities are created
   };
 
   return (
@@ -672,7 +691,7 @@ const ConstellationDetailsPanel = () => {
                 onClick={generateDefaultConstellation}
                 className="px-4 py-2 bg-gray-600 hover:bg-gray-500 text-gray-200 rounded text-sm border border-gray-500"
               >
-                Generate Demo Constellation
+                Generate Default Constellation
               </button>
             </div>
           </div>
@@ -719,69 +738,107 @@ const ConstellationDetailsPanel = () => {
             {/* Constellation Controls */}
             <div className="mb-4 p-3 bg-gray-800 rounded border border-gray-600">
               <h3 className="text-sm font-semibold text-gray-300 mb-2">Constellation</h3>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {/* Satellites and Planes Row */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Total Satellites Control */}
                   <div>
-                    <label className="text-xs text-gray-400 block mb-1">Total Satellites (1-60)</label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="60"
-                      value={customSatellites}
-                      onChange={(e) => setCustomSatellites(parseInt(e.target.value) ?? 1)}
-                      className="w-full px-2 py-1 text-xs bg-gray-700 border border-gray-600 rounded text-white"
-                    />
+                    <label className="text-sm text-gray-300 block mb-2 font-medium">Total Satellites</label>
+                    <div className="flex items-center bg-gray-700 rounded-lg border border-gray-600">
+                      <button
+                        onClick={() => setCustomSatellites(Math.max(1, customSatellites - 1))}
+                        className="p-2 hover:bg-gray-600 rounded-l-lg transition-colors border-r border-gray-600 text-gray-300 hover:text-white"
+                        disabled={customSatellites <= 1}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M19 12.998H5v-2h14z"/>
+                        </svg>
+                      </button>
+                      <div className="flex-1 px-3 py-2 bg-gray-700 text-center">
+                        <span className="text-white font-semibold text-lg">{customSatellites}</span>
+                        <div className="text-xs text-gray-400">satellites</div>
+                      </div>
+                      <button
+                        onClick={() => setCustomSatellites(Math.min(60, customSatellites + 1))}
+                        className="p-2 hover:bg-gray-600 rounded-r-lg transition-colors border-l border-gray-600 text-gray-300 hover:text-white"
+                        disabled={customSatellites >= 60}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M19 12.998h-6v6h-2v-6H5v-2h6v-6h2v6h6z"/>
+                        </svg>
+                      </button>
+                    </div>
+                    <div className="text-xs text-gray-400 mt-1 text-center">Range: 1-60</div>
                   </div>
                   
+                  {/* Number of Planes Control */}
                   <div>
-                    <label className="text-xs text-gray-400 block mb-1">Number of Planes (1-10)</label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="10"
-                      value={customPlanes}
-                      onChange={(e) => {
-                        const newPlanes = parseInt(e.target.value) ?? 1;
-                        setCustomPlanes(newPlanes);
-                        // Resize altitudes array to match
-                        const newAltitudes = Array(newPlanes).fill(400).map((_, i) => customAltitudes[i] ?? 400);
-                        setCustomAltitudes(newAltitudes);
-                      }}
-                      className="w-full px-2 py-1 text-xs bg-gray-700 border border-gray-600 rounded text-white"
-                    />
+                    <label className="text-sm text-gray-300 block mb-2 font-medium">Orbital Planes</label>
+                    <div className="flex items-center bg-gray-700 rounded-lg border border-gray-600">
+                      <button
+                        onClick={() => {
+                          const newPlanes = Math.max(1, customPlanes - 1);
+                          setCustomPlanes(newPlanes);
+                          // Resize altitudes array to match
+                          const newAltitudes = Array(newPlanes).fill(400).map((_, i) => customAltitudes[i] ?? 400);
+                          setCustomAltitudes(newAltitudes);
+                        }}
+                        className="p-2 hover:bg-gray-600 rounded-l-lg transition-colors border-r border-gray-600 text-gray-300 hover:text-white"
+                        disabled={customPlanes <= 1}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M19 12.998H5v-2h14z"/>
+                        </svg>
+                      </button>
+                      <div className="flex-1 px-3 py-2 bg-gray-700 text-center">
+                        <span className="text-white font-semibold text-lg">{customPlanes}</span>
+                        <div className="text-xs text-gray-400">planes</div>
+                      </div>
+                      <button
+                        onClick={() => {
+                          const newPlanes = Math.min(10, customPlanes + 1);
+                          setCustomPlanes(newPlanes);
+                          // Resize altitudes array to match
+                          const newAltitudes = Array(newPlanes).fill(400).map((_, i) => customAltitudes[i] ?? 400);
+                          setCustomAltitudes(newAltitudes);
+                        }}
+                        className="p-2 hover:bg-gray-600 rounded-r-lg transition-colors border-l border-gray-600 text-gray-300 hover:text-white"
+                        disabled={customPlanes >= 10}
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M19 12.998h-6v6h-2v-6H5v-2h6v-6h2v6h6z"/>
+                        </svg>
+                      </button>
+                    </div>
+                    <div className="text-xs text-gray-400 mt-1 text-center">Range: 1-10</div>
                   </div>
                 </div>
                 
                 {/* Dynamic Altitude Sliders */}
                 <div>
-                  <label className="text-xs text-gray-400 block mb-2">Orbital Plane Altitudes</label>
-                  <div className="space-y-2">
+                  <label className="text-sm text-gray-300 block mb-3 font-medium">Orbital Plane Altitudes</label>
+                  <div className="space-y-3">
                     {customAltitudes.map((altitude, index) => {
-                      // Generate dynamic colors using HSL (same as constellation generation)
-                      const hue = (index * 360) / customPlanes;
-                      const saturation = 80; // 0.8 * 100
-                      const lightness = 60;   // 0.6 * 100
-                      
-                      // Convert HSL to CSS color for sliders
-                      const hslColor = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                      // Use unified color generation
+                      const { cssColors } = generatePlaneColors(customPlanes);
+                      const hslColor = cssColors[index] ?? 'hsl(0, 80%, 60%)';
                       
                       // RAAN calculation
                       const raan = Math.round((index * 360) / customPlanes);
                       
                       return (
-                        <div key={index} className="space-y-1">
+                        <div key={index} className="space-y-2">
                           <div className="flex justify-between items-center">
                             <span 
-                              className="text-xs font-semibold"
+                              className="text-sm font-semibold"
                               style={{ color: hslColor }}
                             >
                               RAAN {raan}°
                             </span>
-                            <span className="text-xs text-white">{altitude} km</span>
+                            <span className="text-sm text-white font-medium">{altitude} km</span>
                           </div>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-xs text-gray-500">160km</span>
+                          <div className="flex items-center space-x-3">
+                            <span className="text-xs text-gray-500 w-8">160</span>
                             <input
                               type="range"
                               min="160"
@@ -793,12 +850,12 @@ const ConstellationDetailsPanel = () => {
                                 newAltitudes[index] = parseInt(e.target.value);
                                 setCustomAltitudes(newAltitudes);
                               }}
-                              className="flex-1 h-1 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
+                              className="flex-1 h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer slider"
                               style={{
                                 background: `linear-gradient(to right, ${hslColor} 0%, ${hslColor} ${((altitude - 160) / (2000 - 160)) * 100}%, #374151 ${((altitude - 160) / (2000 - 160)) * 100}%, #374151 100%)`
                               }}
                             />
-                            <span className="text-xs text-gray-500">2000km</span>
+                            <span className="text-xs text-gray-500 w-8">2000</span>
                           </div>
                         </div>
                       );
@@ -821,7 +878,7 @@ const ConstellationDetailsPanel = () => {
                 onClick={generateDefaultConstellation}
                 className="px-3 py-2 bg-gray-600 hover:bg-gray-500 text-gray-200 rounded text-xs border border-gray-500"
               >
-                Reset (550km)
+                Reset to Default
               </button>
               
               <button
@@ -832,22 +889,25 @@ const ConstellationDetailsPanel = () => {
               </button>
               
               <button
-                onClick={toggleCoverage}
-                disabled={!constellationInfo.satelliteRecords || isAnimationPlaying}
+                onClick={toggleAnimationAndCoverage}
+                disabled={!constellationInfo.satelliteRecords}
                 className={`px-3 py-2 text-white rounded text-xs ${
-                  !constellationInfo.satelliteRecords || isAnimationPlaying
+                  !constellationInfo.satelliteRecords
                     ? 'bg-gray-600 cursor-not-allowed' 
+                    : isAnimationPlaying
+                    ? 'bg-purple-500 hover:bg-purple-600'
                     : showCoverageZones
-                    ? 'bg-purple-600 hover:bg-purple-700'
-                    : 'bg-purple-500 hover:bg-purple-600'
+                    ? 'bg-orange-600 hover:bg-orange-700'
+                    : 'bg-blue-500 hover:bg-blue-600'
                 }`}
-                title={isAnimationPlaying ? "Coverage can only be shown when animation is paused" : ""}
               >
-                {isAnimationPlaying 
-                  ? 'Coverage (Pause)' 
-                  : showCoverageZones 
-                  ? 'Hide Coverage' 
-                  : 'Show Coverage'
+                {!constellationInfo.satelliteRecords 
+                  ? 'No Constellation' 
+                  : isAnimationPlaying 
+                  ? '⏸️ Pause & Analyze' 
+                  : showCoverageZones
+                  ? '▶️ Resume Animation'
+                  : '🔍 Analyze Coverage'
                 }
               </button>
             </div>
