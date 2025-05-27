@@ -13,8 +13,7 @@
     "fmt": "prettier --write \"**/*.{ts,tsx,mdx,json}\" --cache",
     "fmt:check": "prettier --check \"**/*.{ts,tsx,mdx,json}\" --cache",
     "clean": "rm -rf .next node_modules",
-    "cleani": "rm -rf .next node_modules && bun i",
-    "prepare": "husky"
+    "cleani": "rm -rf .next node_modules && bun i"
   },
   "dependencies": {
     "@t3-oss/env-nextjs": "^0.13.4",
