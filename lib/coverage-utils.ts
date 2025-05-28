@@ -239,33 +239,3 @@ export function calculateInstantaneousCoverage(
   
   return result;
 }
-
-/**
- * Test function to verify coverage calculation with a single satellite
- * @param altitude Satellite altitude in km
- * @returns Coverage percentage for a single satellite
- */
-export function testSingleSatelliteCoverage(altitude = 550): number {
-  console.log(`🧪 Testing single satellite coverage at ${altitude}km altitude`);
-  
-  // Create a simple mock satellite position over equator
-  const testSatPos: SatellitePosition = {
-    lat: 0, // Equator
-    lng: 0, // Prime meridian
-    height: altitude
-  };
-  
-  const gridPoints = generateEarthGrid(GRID_RESOLUTION_DEG);
-  let coveredPoints = 0;
-  
-  gridPoints.forEach(point => {
-    if (isPointCovered(testSatPos, point, MIN_ELEVATION_DEG)) {
-      coveredPoints++;
-    }
-  });
-  
-  const percentage = (coveredPoints / gridPoints.length) * 100;
-  console.log(`🛰️ Single satellite at ${altitude}km covers ${percentage.toFixed(2)}% of Earth`);
-  
-  return percentage;
-}

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useDraggableResizable } from '../hooks/useDraggableResizable';
+import { useDraggableResizable } from '../../../hooks/useDraggableResizable';
 import * as Cesium from 'cesium';
 import { useCesium } from 'resium';
 

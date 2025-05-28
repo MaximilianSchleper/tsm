@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { useDraggableResizable } from '../hooks/useDraggableResizable';
+import { useDraggableResizable } from '../../../hooks/useDraggableResizable';
 import { useCesium } from 'resium';
 import * as satellite from 'satellite.js';
 import * as Cesium from 'cesium'; // Re-enable Cesium
-import { generateDemoConstellationElements, generateOptimalConstellationElements, generateTLE } from '../lib/satellite-utils';
-import { calculateInstantaneousCoverage } from '../lib/coverage-utils';
-import { addConstellationCoverageZones, removeAllCoverageZones } from '../lib/coverage-visualization';
+import { generateDemoConstellationElements, generateOptimalConstellationElements, generateTLE } from '../../../lib/satellite-utils';
+import { calculateInstantaneousCoverage } from '../../../lib/coverage-utils';
+import { addConstellationCoverageZones, removeAllCoverageZones } from '../../../lib/coverage-visualization';
 
 interface ConstellationDetailsPanelProps {
   setSelectedSatellite: (satellite: Cesium.Entity | null) => void;
@@ -86,6 +86,9 @@ const ConstellationDetailsPanel: React.FC<ConstellationDetailsPanelProps> = ({ s
   // Track previous animation state to detect external changes
   const prevAnimationStateRef = React.useRef<boolean>(false);
   
+  // Track coverage zones visibility synchronously (avoids React state timing issues)
+  const showCoverageZonesRef = React.useRef<boolean>(false);
+  
   // Constellation parameters
   const [customSatellites, setCustomSatellites] = useState(12);
   const [customPlanes, setCustomPlanes] = useState(3);
@@ -125,16 +128,39 @@ const ConstellationDetailsPanel: React.FC<ConstellationDetailsPanelProps> = ({ s
       const currentAnimationState = viewer.clock.shouldAnimate;
       const prevAnimationState = prevAnimationStateRef.current;
       
-      // Detect external animation resume (false → true) and auto-hide coverage zones
-      if (!prevAnimationState && currentAnimationState && showCoverageZones) {
-        // External resume detected while coverage zones are visible - hide them for consistency
-        removeAllCoverageZones(viewer);
-        setShowCoverageZones(false);
+      // Only log and process if there's an actual state change
+      if (prevAnimationState !== currentAnimationState) {
+        // Use ref for immediate, synchronous coverage zone detection
+        const currentShowCoverageZones = showCoverageZonesRef.current;
+        
+        console.log('[Animation Monitor] 🔄 State change detected:', {
+          prev: prevAnimationState,
+          current: currentAnimationState,
+          coverageVisible: currentShowCoverageZones,
+          coverageVisibleState: showCoverageZones, // Also log React state for comparison
+          transition: !prevAnimationState && currentAnimationState ? 'EXTERNAL_RESUME' : 
+                     prevAnimationState && !currentAnimationState ? 'EXTERNAL_PAUSE' : 'other'
+        });
+        
+        // Detect external animation resume (false → true) and auto-hide coverage zones
+        if (!prevAnimationState && currentAnimationState && currentShowCoverageZones) {
+          console.log('[Animation Monitor] External resume detected - hiding coverage zones');
+          // External resume detected while coverage zones are visible - hide them for consistency
+          try {
+            removeAllCoverageZones(viewer);
+            setShowCoverageZones(false);
+            showCoverageZonesRef.current = false; // Update ref immediately
+          } catch (error) {
+            console.error('[Animation Monitor] ❌ Error removing coverage zones:', error);
+          }
+        }
+        
+        // Update states
+        prevAnimationStateRef.current = currentAnimationState;
       }
       
-      // Update states
+      // Always update isAnimationPlaying to keep UI in sync
       setIsAnimationPlaying(currentAnimationState);
-      prevAnimationStateRef.current = currentAnimationState;
     };
 
     // Check initial state
@@ -146,7 +172,7 @@ const ConstellationDetailsPanel: React.FC<ConstellationDetailsPanelProps> = ({ s
     return () => {
       viewer.clock.onTick.removeEventListener(checkAnimationState);
     };
-  }, [viewer, showCoverageZones]);
+  }, [viewer]); // Removed showCoverageZones to fix circular dependency
 
   // Poll for new API constellation parameters
   useEffect(() => {
@@ -196,7 +222,8 @@ const ConstellationDetailsPanel: React.FC<ConstellationDetailsPanelProps> = ({ s
     satelliteNaming: (index: number, planeIndex: number, satInPlane: number) => { name: string; id: string },
     preserveCurrentTime = false,
     constellationType: 'demo' | 'custom',
-    configOverrides: Partial<ConstellationInfo['config']> = {}
+    configOverrides: Partial<ConstellationInfo['config']> = {},
+    autoShowCoverage = false
   ) => {
     if (!viewer) {
       console.error("Cesium viewer is not available");
@@ -212,6 +239,7 @@ const ConstellationDetailsPanel: React.FC<ConstellationDetailsPanelProps> = ({ s
       // Clear all existing satellites and reset coverage state
       viewer.entities.removeAll();
       setShowCoverageZones(false);
+      showCoverageZonesRef.current = false; // Reset ref
 
       // Time setup with dynamic resolution based on satellite count
       const startTime = currentSimulationTime ?? new Date();
@@ -395,6 +423,77 @@ const ConstellationDetailsPanel: React.FC<ConstellationDetailsPanelProps> = ({ s
         satelliteIds: satelliteIds
       });
 
+      // Auto-show coverage zones if requested (uses fresh satellite data)
+      if (autoShowCoverage) {
+        console.log('Auto-showing coverage zones with fresh constellation data');
+        
+        // Create coverage zones at current simulation time using fresh data
+        const currentTime = currentSimulationTime || startTime;
+        
+        // Generate colors and satellite-to-plane mapping
+        let satellitesPerPlane: number[] = [];
+        
+        if (constellationType === 'demo') {
+          satellitesPerPlane = [DEMO_SATS_PER_PLANE, DEMO_SATS_PER_PLANE, DEMO_SATS_PER_PLANE, DEMO_SATS_PER_PLANE];
+        } else {
+          // Custom constellation: calculate satellites per plane
+          const baseSatsPerPlane = Math.floor(elements.length / numPlanes);
+          const extraSats = elements.length % numPlanes;
+          for (let i = 0; i < numPlanes; i++) {
+            satellitesPerPlane.push(baseSatsPerPlane + (i < extraSats ? 1 : 0));
+          }
+        }
+
+        // Map satellites to planes and colors
+        const satelliteData = satelliteRecords
+          .map((satrec, index) => {
+            const id = satelliteIds[index];
+            if (!id) return null;
+            
+            // Determine which plane this satellite belongs to (same logic as generation)
+            let currentPlane = 0;
+            let satellitesSoFar = 0;
+            
+            for (let plane = 0; plane < satellitesPerPlane.length; plane++) {
+              const satsInThisPlane = satellitesPerPlane[plane] ?? 0;
+              if (index < satellitesSoFar + satsInThisPlane) {
+                currentPlane = plane;
+                break;
+              }
+              satellitesSoFar += satsInThisPlane;
+            }
+            
+            const color = colors[currentPlane];
+            if (!color) return null;
+            
+            return { id, satrec, color };
+          })
+          .filter((item): item is { id: string; satrec: satellite.SatRec; color: Cesium.Color } => item !== null);
+
+        // Create coverage zones with fresh data
+        addConstellationCoverageZones(viewer, satelliteData, colors, currentTime);
+        
+        // Calculate and update coverage percentage
+        const coverageResult = calculateInstantaneousCoverage(satelliteRecords, currentTime);
+        
+        // Update constellation info with coverage (need to do this after the initial setConstellationInfo)
+        setTimeout(() => {
+          setConstellationInfo(prev => ({
+            ...prev,
+            coverage: {
+              globalPercentage: coverageResult.globalPercentage,
+              calculatedAt: coverageResult.calculatedAt
+            }
+          }));
+        }, 0);
+        
+        // Update coverage state
+        setShowCoverageZones(true);
+        showCoverageZonesRef.current = true;
+        
+        console.log('✅ Auto-coverage zones created with fresh data');
+      }
+
     } catch (error) {
       console.error("ERROR during constellation generation:", error);
       if (error instanceof Error) {
@@ -457,13 +556,15 @@ const ConstellationDetailsPanel: React.FC<ConstellationDetailsPanelProps> = ({ s
     generateDemoConstellation(false, false); // Don't preserve time, don't use custom altitudes
   };
 
-  const generateCustomConstellation = React.useCallback((preserveCurrentTime = false) => {
+  const generateCustomConstellation = React.useCallback((preserveCurrentTime = false, autoShowCoverage = false) => {
     try {
       // Validation
       if (customAltitudes.length !== customPlanes) {
         alert(`Number of altitudes (${customAltitudes.length}) must equal number of planes (${customPlanes})`);
         return;
       }
+
+      console.log('generateCustomConstellation:', { preserveCurrentTime, autoShowCoverage });
 
       // Generate optimal constellation elements
       const elements = generateOptimalConstellationElements(
@@ -490,7 +591,8 @@ const ConstellationDetailsPanel: React.FC<ConstellationDetailsPanelProps> = ({ s
           altitudesByPlane: customAltitudes,
           inclination: INCLINATION,
           simulationDays: SIMULATION_DAYS
-        }
+        },
+        autoShowCoverage // Pass the flag to generateConstellationBase
       );
 
     } catch (error) {
@@ -514,6 +616,7 @@ const ConstellationDetailsPanel: React.FC<ConstellationDetailsPanelProps> = ({ s
     if (!viewer) return;
     viewer.entities.removeAll();
     setShowCoverageZones(false);
+    showCoverageZonesRef.current = false; // Reset ref
     
     // Clear selected satellite
     setSelectedSatellite(null);
@@ -612,26 +715,42 @@ const ConstellationDetailsPanel: React.FC<ConstellationDetailsPanelProps> = ({ s
     }));
     
     setShowCoverageZones(true);
+    showCoverageZonesRef.current = true; // Update ref immediately
   }, [viewer, constellationInfo, customPlanes, customSatellites]);
 
   const toggleAnimationAndCoverage = () => {
     if (!viewer || !constellationInfo.satelliteRecords || !constellationInfo.satelliteIds) {
+      console.log('[Panel Button] ❌ Cannot toggle - missing viewer or constellation data');
       return;
     }
 
+    console.log('[Panel Button] Toggle triggered:', {
+      isAnimationPlaying,
+      showCoverageZones,
+      action: isAnimationPlaying ? 'PAUSE_AND_SHOW' : showCoverageZones ? 'RESUME_AND_HIDE' : 'SHOW_COVERAGE'
+    });
+
     if (isAnimationPlaying) {
       // Currently playing -> pause animation and show coverage
+      console.log('[Panel Button] Pausing animation and showing coverage');
       viewer.clock.shouldAnimate = false;
       
       // Show coverage zones at current simulation time
       createCoverageZones();
     } else if (showCoverageZones) {
       // Currently paused with coverage shown -> resume animation and hide coverage
+      console.log('[Panel Button] Resuming animation and hiding coverage');
       viewer.clock.shouldAnimate = true;
-      removeAllCoverageZones(viewer);
-      setShowCoverageZones(false);
+      try {
+        removeAllCoverageZones(viewer);
+        setShowCoverageZones(false);
+        showCoverageZonesRef.current = false; // Update ref immediately
+      } catch (error) {
+        console.error('[Panel Button] ❌ Error removing coverage zones:', error);
+      }
     } else {
       // Currently paused without coverage -> show coverage (keep paused)
+      console.log('[Panel Button] Showing coverage (keep paused)');
       createCoverageZones();
     }
   };
@@ -650,9 +769,18 @@ const ConstellationDetailsPanel: React.FC<ConstellationDetailsPanelProps> = ({ s
       console.log('📌 Saving selected satellite:', selectedSatelliteId, selectedSatelliteName);
     }
 
+    // Check if coverage zones were visible and animation is paused before regeneration
+    const shouldRestoreCoverageZones = showCoverageZonesRef.current && !isAnimationPlaying;
+    console.log('🔄 Apply Changes:', {
+      zonesVisible: showCoverageZonesRef.current,
+      animationPaused: !isAnimationPlaying,
+      shouldRestoreZones: shouldRestoreCoverageZones
+    });
+
     // Always use custom constellation when applying changes since user is setting custom parameters
     // This ensures that satellite count and plane count changes are respected
-    generateCustomConstellation(true);
+    // Pass shouldRestoreCoverageZones as autoShowCoverage to create zones with fresh data
+    generateCustomConstellation(true, shouldRestoreCoverageZones);
 
     // After constellation regeneration, attempt to restore selection
     // Use a small delay to ensure entities are fully created

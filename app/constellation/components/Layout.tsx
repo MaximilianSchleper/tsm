@@ -7,7 +7,7 @@ import SatelliteDetailsPanel from './SatelliteDetailsPanel';
 import ExitButton from './ExitButton';
 import type * as Cesium from 'cesium';
 
-const GlobeViewer = dynamic(() => import('../components/GlobeViewer'), { ssr: false });
+const GlobeViewer = dynamic(() => import('./GlobeViewer'), { ssr: false });
 
 const Layout = () => {
   const [selectedSatellite, setSelectedSatelliteState] = useState<Cesium.Entity | null>(null);
@@ -42,22 +42,22 @@ const Layout = () => {
             toggleConstellationPanel={toggleConstellationPanel}
           />
           {/* <TaskSchedulePanel /> */}
-          {showConstellationPanel && (
-            <div className="animate-in fade-in duration-300">
-              <ConstellationDetailsPanel 
-                setSelectedSatellite={setSelectedSatellite}
-                onClose={toggleConstellationPanel}
-              />
-            </div>
-          )}
-          {showSatellitePanel && (
-            <div className="animate-in fade-in duration-300">
-              <SatelliteDetailsPanel 
-                selectedSatellite={selectedSatellite}
-                onClose={toggleSatellitePanel}
-              />
-            </div>
-          )}
+          <div 
+            className={`animate-in fade-in duration-300 ${showConstellationPanel ? '' : 'hidden'}`}
+          >
+            <ConstellationDetailsPanel 
+              setSelectedSatellite={setSelectedSatellite}
+              onClose={toggleConstellationPanel}
+            />
+          </div>
+          <div 
+            className={`animate-in fade-in duration-300 ${showSatellitePanel ? '' : 'hidden'}`}
+          >
+            <SatelliteDetailsPanel 
+              selectedSatellite={selectedSatellite}
+              onClose={toggleSatellitePanel}
+            />
+          </div>
         </GlobeViewer>
       </div>
        {/* Remove panels from here as they are now children of GlobeViewer 

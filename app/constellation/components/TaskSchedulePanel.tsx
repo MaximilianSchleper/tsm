@@ -1,5 +1,5 @@
 import React from 'react';
-import { useDraggableResizable } from '../hooks/useDraggableResizable';
+import { useDraggableResizable } from '../../../hooks/useDraggableResizable';
 
 const TaskSchedulePanel = () => {
   const {

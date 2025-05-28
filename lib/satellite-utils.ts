@@ -97,123 +97,86 @@ export function generateTLE(elements: OrbitalElements): { line1: string; line2: 
 /**
  * Generate demo constellation orbital elements
  */
-export function generateDemoConstellationElements(): OrbitalElements[] {
-  const baseEpoch = new Date(); // Current time
-  const altitude = 550; // km
-  const inclination = 65; // degrees - lower inclination spreads planes wider at equator
-  const raans = [0, 90, 180, 270]; // Four orbital planes for global coverage
-  
-  // More randomized starting positions instead of just opposite sides
-  const trueAnomalies = [45, 135, 225, 315]; // Spread around the orbit
-  
+export const generateDemoConstellationElements = (): OrbitalElements[] => {
   const elements: OrbitalElements[] = [];
-  let satelliteNumber = 50001; // Starting satellite number for demo
+  const planes = 4;
+  const satellitesPerPlane = 2;
+  const altitude = 550; // 550km altitude
+  const inclination = 65; // 65° inclination
   
-  console.log(`[Demo Constellation] Generating ${elements.length} satellites: 4 planes × 2 satellites`);
+  let satelliteNumber = 25000; // Starting satellite number
   
-  let anomalyIndex = 0;
-  for (const raan of raans) {
-    for (let i = 0; i < 2; i++) { // 2 satellites per plane
-      const trueAnomaly = trueAnomalies[anomalyIndex % trueAnomalies.length];
-      if (trueAnomaly === undefined) {
-        console.error(`ERROR: No true anomaly defined for index ${anomalyIndex}`);
-        continue;
-      }
-      
-      elements.push({
-        altitude,
-        inclination,
-        raan,
-        trueAnomaly: trueAnomaly,
-        epoch: baseEpoch,
-        satelliteNumber: satelliteNumber++
-      });
-      anomalyIndex++;
-    }
-  }
-  
-  return elements;
-}
-
-/**
- * Generate optimal constellation orbital elements for maximum coverage
- */
-export function generateOptimalConstellationElements(
-  numSatellites: number,
-  numPlanes: number, 
-  altitudesPerPlane: number[]
-): OrbitalElements[] {
-  // Validation
-  if (numSatellites < 1 || numSatellites > 60) {
-    throw new Error(`Invalid numSatellites: ${numSatellites}. Must be between 1 and 60.`);
-  }
-  if (numPlanes < 1 || numPlanes > 10) {
-    throw new Error(`Invalid numPlanes: ${numPlanes}. Must be between 1 and 10.`);
-  }
-  if (altitudesPerPlane.length !== numPlanes) {
-    throw new Error(`altitudesPerPlane length (${altitudesPerPlane.length}) must equal numPlanes (${numPlanes})`);
-  }
-  for (let i = 0; i < altitudesPerPlane.length; i++) {
-    const alt = altitudesPerPlane[i];
-    if (alt === undefined || alt < 160 || alt > 2000) {
-      throw new Error(`Invalid altitude at index ${i}: ${alt}km. Must be between 160 and 2000 km.`);
-    }
-  }
-  if (numSatellites < numPlanes) {
-    throw new Error(`numSatellites (${numSatellites}) must be >= numPlanes (${numPlanes})`);
-  }
-
-  // Calculate optimal RAAN distribution (evenly spaced around Earth)
-  const raans: number[] = [];
-  for (let i = 0; i < numPlanes; i++) {
-    raans.push((i * 360) / numPlanes);
-  }
-
-  // Distribute satellites optimally across planes
-  const satellitesPerPlane: number[] = [];
-  const baseSatsPerPlane = Math.floor(numSatellites / numPlanes);
-  const extraSats = numSatellites % numPlanes;
-  
-  for (let i = 0; i < numPlanes; i++) {
-    // Distribute extra satellites to first planes for even distribution
-    satellitesPerPlane.push(baseSatsPerPlane + (i < extraSats ? 1 : 0));
-  }
-
-  const baseEpoch = new Date();
-  const inclination = 65; // degrees - good for global coverage
-  const elements: OrbitalElements[] = [];
-  let satelliteNumber = 50001;
-
-  console.log(`[Optimal Constellation] Generating ${numSatellites} satellites across ${numPlanes} planes`);
-  console.log(`[Optimal Constellation] RAAN distribution:`, raans);
-  console.log(`[Optimal Constellation] Satellites per plane:`, satellitesPerPlane);
-
-  // Generate satellites for each plane
-  for (let planeIndex = 0; planeIndex < numPlanes; planeIndex++) {
-    const raan = raans[planeIndex]!;
-    const altitude = altitudesPerPlane[planeIndex]!;
-    const satsInThisPlane = satellitesPerPlane[planeIndex]!;
-
-    // Calculate optimal true anomaly distribution within this plane
-    const trueAnomalies: number[] = [];
-    for (let satIndex = 0; satIndex < satsInThisPlane; satIndex++) {
-      trueAnomalies.push((satIndex * 360) / satsInThisPlane);
-    }
-
-    // Create satellites for this plane
-    for (let satIndex = 0; satIndex < satsInThisPlane; satIndex++) {
-      const trueAnomaly = trueAnomalies[satIndex]!;
+  for (let plane = 0; plane < planes; plane++) {
+    const raan = (plane * 360) / planes; // 0°, 90°, 180°, 270°
+    
+    for (let sat = 0; sat < satellitesPerPlane; sat++) {
+      const trueAnomaly = (sat * 360) / satellitesPerPlane; // 0°, 180°
       
       elements.push({
         altitude,
         inclination,
         raan,
         trueAnomaly,
-        epoch: baseEpoch,
+        epoch: new Date(), // Current time as epoch
         satelliteNumber: satelliteNumber++
       });
     }
   }
-
+  
   return elements;
-} 
+};
+
+/**
+ * Generate optimal constellation orbital elements for maximum coverage
+ */
+export const generateOptimalConstellationElements = (
+  numSatellites: number,
+  numPlanes: number,
+  altitudesPerPlane: number[]
+): OrbitalElements[] => {
+  if (altitudesPerPlane.length !== numPlanes) {
+    throw new Error(`Number of altitudes (${altitudesPerPlane.length}) must equal number of planes (${numPlanes})`);
+  }
+  
+  const elements: OrbitalElements[] = [];
+  const inclination = 65; // degrees
+  
+  // Calculate RAAN values for evenly distributed planes
+  const raans: number[] = [];
+  for (let i = 0; i < numPlanes; i++) {
+    raans.push((i * 360) / numPlanes);
+  }
+  
+  // Calculate satellites per plane
+  const baseSatsPerPlane = Math.floor(numSatellites / numPlanes);
+  const extraSats = numSatellites % numPlanes;
+  const satellitesPerPlane: number[] = [];
+  
+  for (let i = 0; i < numPlanes; i++) {
+    satellitesPerPlane.push(baseSatsPerPlane + (i < extraSats ? 1 : 0));
+  }
+  
+  let satelliteNumber = 30000; // Starting satellite number for custom constellations
+  
+  // Generate satellites for each plane
+  for (let planeIndex = 0; planeIndex < numPlanes; planeIndex++) {
+    const raan = raans[planeIndex]!;
+    const altitude = altitudesPerPlane[planeIndex]!;
+    const satsInThisPlane = satellitesPerPlane[planeIndex]!;
+    
+    for (let satIndex = 0; satIndex < satsInThisPlane; satIndex++) {
+      const trueAnomaly = (satIndex * 360) / satsInThisPlane;
+      
+      elements.push({
+        altitude,
+        inclination,
+        raan,
+        trueAnomaly,
+        epoch: new Date(),
+        satelliteNumber: satelliteNumber++
+      });
+    }
+  }
+  
+  return elements;
+}; 

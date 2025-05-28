@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useDraggableResizable } from '../hooks/useDraggableResizable';
+import { useDraggableResizable } from '../../../hooks/useDraggableResizable';
 import Image from 'next/image';
 
 interface TopBarProps {
@@ -18,8 +18,6 @@ const TopBar: React.FC<TopBarProps> = ({
   const {
     position,
     size,
-    // setPosition, // Removed as it's unused
-    setSize,
     handleMouseDownDrag,
     // No resize for TopBar
   } = useDraggableResizable({

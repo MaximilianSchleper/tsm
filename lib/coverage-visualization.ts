@@ -182,20 +182,17 @@ export function addConstellationCoverageZones(
  * Remove all coverage zones from viewer
  * @param viewer Cesium viewer instance
  */
-export function removeAllCoverageZones(viewer: Cesium.Viewer): void {
-  const entities = viewer.entities.values;
-  const coverageEntities = entities.filter(entity => 
-    entity.id?.toString().startsWith('coverage-')
+export const removeAllCoverageZones = (viewer: Cesium.Viewer): void => {
+  const coverageEntities = viewer.entities.values.filter(entity => 
+    entity.id.startsWith('coverage-')
   );
   
+  console.log(`🧹 Found ${coverageEntities.length} coverage zones to remove`);
   coverageEntities.forEach(entity => {
-    if (entity.id) {
-      viewer.entities.removeById(entity.id.toString());
-    }
+    console.log(`🗑️ Removing coverage entity: ${entity.id}`);
+    viewer.entities.remove(entity);
   });
-  
-  console.log(`Removed ${coverageEntities.length} coverage zones`);
-}
+};
 
 /**
  * Update coverage zones to current time
