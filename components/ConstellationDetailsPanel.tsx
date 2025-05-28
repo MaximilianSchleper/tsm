@@ -9,6 +9,7 @@ import { addConstellationCoverageZones, removeAllCoverageZones } from '../lib/co
 
 interface ConstellationDetailsPanelProps {
   setSelectedSatellite: (satellite: Cesium.Entity | null) => void;
+  onClose?: () => void;
 }
 
 interface ConstellationInfo {
@@ -61,7 +62,7 @@ const generatePlaneColors = (numPlanes: number): { cesiumColors: Cesium.Color[],
   return { cesiumColors, cssColors };
 };
 
-const ConstellationDetailsPanel: React.FC<ConstellationDetailsPanelProps> = ({ setSelectedSatellite }) => {
+const ConstellationDetailsPanel: React.FC<ConstellationDetailsPanelProps> = ({ setSelectedSatellite, onClose }) => {
   const { viewer } = useCesium();
 
   // Constants
@@ -82,6 +83,9 @@ const ConstellationDetailsPanel: React.FC<ConstellationDetailsPanelProps> = ({ s
   const [showCoverageZones, setShowCoverageZones] = useState(false);
   const [isAnimationPlaying, setIsAnimationPlaying] = useState(false);
   
+  // Track previous animation state to detect external changes
+  const prevAnimationStateRef = React.useRef<boolean>(false);
+  
   // Constellation parameters
   const [customSatellites, setCustomSatellites] = useState(12);
   const [customPlanes, setCustomPlanes] = useState(3);
@@ -97,19 +101,18 @@ const ConstellationDetailsPanel: React.FC<ConstellationDetailsPanelProps> = ({ s
     handleMouseDownResize,
     isResizable
   } = useDraggableResizable({
-    initialPosition: { top: 70, left: 1000 - 480 }, // Adjusted for bigger panel
-    initialSize: { width: 460, height: 700 }, // Increased size for more planes
+    initialPosition: { top: 70, left: 420 }, // Fixed position that doesn't depend on window width initially
+    initialSize: { width: 460, height: 810 }, // Slightly smaller height
     minWidth: 460,
-    minHeight: 600,
+    minHeight: 550,
   });
 
-  // Update position based on window dimensions on client side - Mount only
+  // Position the panel on the right side of the screen when window loads
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // Set initial position based on the initialSize from the hook, which is stable.
-      // Using size.width from state here would reflect the current size after potential resizes if this ran more than once.
-      // However, with an empty dependency array, it uses the size state as it is on the first client render.
-      setPosition(prevPos => ({ ...prevPos, left: window.innerWidth - (size.width + 40) }));
+      // Position on the right side with some margin, but not overlapping
+      const rightPosition = Math.max(420, window.innerWidth - size.width - 20);
+      setPosition(prevPos => ({ ...prevPos, left: rightPosition }));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty dependency array: runs only on mount
@@ -119,7 +122,19 @@ const ConstellationDetailsPanel: React.FC<ConstellationDetailsPanelProps> = ({ s
     if (!viewer?.clock) return;
 
     const checkAnimationState = () => {
-      setIsAnimationPlaying(viewer.clock.shouldAnimate);
+      const currentAnimationState = viewer.clock.shouldAnimate;
+      const prevAnimationState = prevAnimationStateRef.current;
+      
+      // Detect external animation resume (false → true) and auto-hide coverage zones
+      if (!prevAnimationState && currentAnimationState && showCoverageZones) {
+        // External resume detected while coverage zones are visible - hide them for consistency
+        removeAllCoverageZones(viewer);
+        setShowCoverageZones(false);
+      }
+      
+      // Update states
+      setIsAnimationPlaying(currentAnimationState);
+      prevAnimationStateRef.current = currentAnimationState;
     };
 
     // Check initial state
@@ -131,7 +146,7 @@ const ConstellationDetailsPanel: React.FC<ConstellationDetailsPanelProps> = ({ s
     return () => {
       viewer.clock.onTick.removeEventListener(checkAnimationState);
     };
-  }, [viewer]);
+  }, [viewer, showCoverageZones]);
 
   // Poll for new API constellation parameters
   useEffect(() => {
@@ -671,14 +686,25 @@ const ConstellationDetailsPanel: React.FC<ConstellationDetailsPanelProps> = ({ s
       <div className="window-header" onMouseDown={handleMouseDownDrag}>
         <div className="flex justify-between items-center w-full">
           <span>Constellation Details</span>
-          {constellationInfo.coverage && (
-            <div className="flex items-center space-x-2">
-              <span className="text-xs text-gray-300">Coverage:</span>
-              <span className="text-green-400 font-bold text-lg bg-green-400/10 px-2 py-1 rounded border border-green-400/30">
-                {constellationInfo.coverage.globalPercentage}%
-              </span>
-            </div>
-          )}
+          <div className="flex items-center space-x-2">
+            {constellationInfo.coverage && (
+              <>
+                <span className="text-xs text-gray-300">Coverage:</span>
+                <span className="text-green-400 font-bold text-lg bg-green-400/10 px-2 py-1 rounded border border-green-400/30">
+                  {constellationInfo.coverage.globalPercentage}%
+                </span>
+              </>
+            )}
+            {onClose && (
+              <button
+                onClick={onClose}
+                className="w-6 h-6 flex items-center justify-center text-[#E0E0E0] hover:text-[#FFB74D] hover:bg-[rgba(255,183,77,0.1)] rounded transition-colors duration-200 ml-2"
+                title="Close Panel"
+              >
+                ×
+              </button>
+            )}
+          </div>
         </div>
       </div>
       <div className="window-content">

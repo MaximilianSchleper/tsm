@@ -5,9 +5,10 @@ import { useCesium } from 'resium';
 
 interface SatelliteDetailsPanelProps {
   selectedSatellite: Cesium.Entity | null;
+  onClose?: () => void;
 }
 
-const SatelliteDetailsPanel: React.FC<SatelliteDetailsPanelProps> = ({ selectedSatellite }) => {
+const SatelliteDetailsPanel: React.FC<SatelliteDetailsPanelProps> = ({ selectedSatellite, onClose }) => {
   const { viewer } = useCesium();
   const [currentPosition, setCurrentPosition] = useState<Cesium.Cartesian3 | null>(null);
 
@@ -18,10 +19,10 @@ const SatelliteDetailsPanel: React.FC<SatelliteDetailsPanelProps> = ({ selectedS
     handleMouseDownResize, 
     isResizable 
   } = useDraggableResizable({
-    initialPosition: { top: 70, left: 40 }, // Moved to left side
-    initialSize: { width: 400, height: 200 },
-    minWidth: 400,
-    minHeight: 200,
+    initialPosition: { top: 70, left: 20 }, // Better positioned below TopBar
+    initialSize: { width: 380, height: 200 },
+    minWidth: 380,
+    minHeight: 180,
   });
 
   // No dynamic positioning needed since it's now on the left side
@@ -76,7 +77,16 @@ const SatelliteDetailsPanel: React.FC<SatelliteDetailsPanelProps> = ({ selectedS
       }}
     >
       <div className="window-header" onMouseDown={handleMouseDownDrag}>
-        Satellite Details
+        <span>Satellite Details</span>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="absolute top-2 right-2 w-6 h-6 flex items-center justify-center text-[#E0E0E0] hover:text-[#FFB74D] hover:bg-[rgba(255,183,77,0.1)] rounded transition-colors duration-200"
+            title="Close Panel"
+          >
+            ×
+          </button>
+        )}
       </div>
       <div className="window-content">
         {selectedSatellite ? (

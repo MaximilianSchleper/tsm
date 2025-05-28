@@ -1,7 +1,20 @@
 import React, { useEffect } from 'react';
 import { useDraggableResizable } from '../hooks/useDraggableResizable';
+import Image from 'next/image';
 
-const TopBar = () => {
+interface TopBarProps {
+  showSatellitePanel: boolean;
+  showConstellationPanel: boolean;
+  toggleSatellitePanel: () => void;
+  toggleConstellationPanel: () => void;
+}
+
+const TopBar: React.FC<TopBarProps> = ({ 
+  showSatellitePanel, 
+  showConstellationPanel, 
+  toggleSatellitePanel, 
+  toggleConstellationPanel 
+}) => {
   const {
     position,
     size,
@@ -10,41 +23,75 @@ const TopBar = () => {
     handleMouseDownDrag,
     // No resize for TopBar
   } = useDraggableResizable({
-    initialPosition: { top: 10, left: 10 }, 
-    initialSize: { width: 800, height: 50 }, // Default for SSR, will be updated
+    initialPosition: { top: 15, left: 140 }, 
+    initialSize: { width: 250, height: 40 }, // Wide and short, all in one row
     resizable: false, // TopBar is not resizable by default
-    minWidth: 400, // Example min width if it were resizable
-    minHeight: 50, // Fixed height
+    minWidth: 250, 
+    minHeight: 40,
   });
 
-  // Update size based on window dimensions on client side - Mount only
+  // Keep fixed size for panel controls
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setSize(prevSize => ({ ...prevSize, width: window.innerWidth * 0.75 }));
-      // Example: If you wanted to center it with 75% width:
-      // setPosition({ top: 10, left: (window.innerWidth * 0.25) / 2 }); 
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty dependency array: runs only on mount
+    // No need to resize based on window for panel controls
+  }, []);
 
   return (
     <div
-      className="draggable-window top-bar-window" // top-bar-window for specific flex styles if needed
+      className="border border-[#FFB74D] bg-[rgba(20,20,25,0.7)] backdrop-blur-sm rounded-lg shadow-lg"
       style={{
+        position: 'absolute',
         top: `${position.top}px`,
         left: `${position.left}px`,
         width: `${size.width}px`,
         height: `${size.height}px`,
-        // Ensure specific top-bar styles are maintained or handled by top-bar-window class
-        display: 'flex', 
-        justifyContent: 'space-between',
+        display: 'flex',
+        flexDirection: 'row',
         alignItems: 'center',
-        padding: '0 10px', // Padding is now inside the draggable window
+        justifyContent: 'space-between',
+        padding: '0 16px',
+        cursor: 'grab',
+        userSelect: 'none',
       }}
-      onMouseDown={handleMouseDownDrag} // Entire TopBar is draggable
+      onMouseDown={handleMouseDownDrag}
     >
-      <div className="search-placeholder">Search Placeholder</div>
-      <div className="menu-button-placeholder">Menu Button Placeholder</div>
+      <span className="text-[#FFB74D] font-bold text-sm tracking-wide">PANEL CONTROLS</span>
+      <div style={{ display: 'flex', flexDirection: 'row', gap: '8px', alignItems: 'center' }}>
+        <button
+          onClick={toggleSatellitePanel}
+          className={`flex items-center justify-center w-7 h-7 rounded-lg border border-[#FFB74D] transition-all duration-200 ${
+            showSatellitePanel 
+              ? 'bg-[#FFB74D]' 
+              : 'bg-[rgba(35,35,40,0.8)] hover:bg-[rgba(255,183,77,0.15)]'
+          }`}
+          title="Toggle Satellite Details Panel"
+        >
+          <Image 
+            src="/satellite_alt.svg" 
+            alt="Satellite" 
+            width={16} 
+            height={16}
+            className={`${showSatellitePanel ? 'brightness-0' : 'brightness-0 invert'}`}
+          />
+        </button>
+        
+        <button
+          onClick={toggleConstellationPanel}
+          className={`flex items-center justify-center w-7 h-7 rounded-lg border border-[#FFB74D] transition-all duration-200 ${
+            showConstellationPanel 
+              ? 'bg-[#FFB74D]' 
+              : 'bg-[rgba(35,35,40,0.8)] hover:bg-[rgba(255,183,77,0.15)]'
+          }`}
+          title="Toggle Constellation Details Panel"
+        >
+          <Image 
+            src="/globe.svg" 
+            alt="Globe" 
+            width={16} 
+            height={16}
+            className={`${showConstellationPanel ? 'brightness-0' : 'brightness-0 invert'}`}
+          />
+        </button>
+      </div>
     </div>
   );
 };

@@ -1,6 +1,39 @@
 @import "tailwindcss";
 @import "../public/cesium/Widgets/widgets.css";
 
+@layer utilities {
+  .font-orbitron {
+    font-family: var(--font-orbitron), sans-serif;
+  }
+  
+  .font-roboto-mono {
+    font-family: var(--font-roboto-mono), monospace;
+  }
+}
+
+/* Panel fade transitions */
+.panel-fade-enter {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+.panel-fade-enter-active {
+  opacity: 1;
+  transform: scale(1);
+  transition: opacity 300ms ease-out, transform 300ms ease-out;
+}
+
+.panel-fade-exit {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.panel-fade-exit-active {
+  opacity: 0;
+  transform: scale(0.95);
+  transition: opacity 200ms ease-in, transform 200ms ease-in;
+}
+
 body, html, #__next, main {
   margin: 0;
   padding: 0;
