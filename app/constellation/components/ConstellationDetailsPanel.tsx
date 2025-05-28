@@ -172,6 +172,7 @@ const ConstellationDetailsPanel: React.FC<ConstellationDetailsPanelProps> = ({ s
     return () => {
       viewer.clock.onTick.removeEventListener(checkAnimationState);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewer]); // Removed showCoverageZones to fix circular dependency
 
   // Poll for new API constellation parameters
@@ -428,7 +429,7 @@ const ConstellationDetailsPanel: React.FC<ConstellationDetailsPanelProps> = ({ s
         console.log('Auto-showing coverage zones with fresh constellation data');
         
         // Create coverage zones at current simulation time using fresh data
-        const currentTime = currentSimulationTime || startTime;
+        const currentTime = currentSimulationTime ?? startTime;
         
         // Generate colors and satellite-to-plane mapping
         let satellitesPerPlane: number[] = [];
